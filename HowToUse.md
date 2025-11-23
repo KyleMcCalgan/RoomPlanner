@@ -444,10 +444,277 @@ The MVP will be considered complete when:
 
 ---
 
+# Order of Operations Map
+
+## PHASE 1: Foundation & Basic Rendering ⭐ START HERE
+**Goal:** Get a canvas displaying a room boundary
+
+### Step 1.1 - HTML Structure & Styling
+- Create `index.html` with basic layout
+- Create `css/main.css` with layout structure
+- Create empty placeholder JS files
+- **Deliverable:** Static UI that loads without errors
+- **Dependencies:** None
+
+### Step 1.2 - Room Definition System
+- Create `js/room.js` - Room data structure and management
+- Create `js/main.js` - Initialize application and room setup form
+- **Deliverable:** Can input room dimensions and store them
+- **Dependencies:** None
+
+### Step 1.3 - Basic Canvas Rendering
+- Create `js/renderer.js` - Canvas setup and room boundary drawing
+- Implement scale calculations to fit room in viewport
+- Add rulers/measurements
+- **Deliverable:** See your room boundaries drawn on canvas
+- **Dependencies:** 1.2 (needs room data)
+
+---
+
+## PHASE 2: Object Creation & Placement ⭐ CORE FUNCTIONALITY
+**Goal:** Click to place simple rectangular objects
+
+### Step 2.1 - Object Data Structure
+- Create `js/object.js` - Object class with properties (dimensions, position, color, etc.)
+- Object creation form/modal in UI
+- **Deliverable:** Can create object data (even if not visible yet)
+- **Dependencies:** None (standalone)
+
+### Step 2.2 - Object Rendering (Top-Down View)
+- Extend `js/renderer.js` to draw objects as rectangles
+- Draw objects with colors and names/labels
+- **Deliverable:** Objects appear on canvas in top-down view
+- **Dependencies:** 2.1, 1.3
+
+### Step 2.3 - Click-to-Place System
+- Create `js/ui.js` - Handle canvas mouse events
+- Implement placement mode (click canvas to place pending object)
+- Preview object at mouse position before placement
+- **Deliverable:** Can click canvas to place objects
+- **Dependencies:** 2.1, 2.2
+
+### Step 2.4 - Basic Collision Detection
+- Create `js/collision.js` - Room boundary collision only
+- Prevent objects from being placed outside room
+- Visual feedback when placement is invalid
+- **Deliverable:** Objects can't be placed outside room boundaries
+- **Dependencies:** 2.3
+
+---
+
+## PHASE 3: Object Manipulation
+**Goal:** Select, move, rotate, and delete objects
+
+### Step 3.1 - Object Selection
+- Extend `js/ui.js` to detect clicks on existing objects
+- Visual feedback for selected object (highlight/outline)
+- **Deliverable:** Can click to select placed objects
+- **Dependencies:** 2.2
+
+### Step 3.2 - Object Movement
+- Drag selected objects to new positions
+- Real-time collision checking while dragging
+- **Deliverable:** Can drag objects around the room
+- **Dependencies:** 3.1, 2.4
+
+### Step 3.3 - Rotation & Deletion
+- Add keyboard controls for rotation (R key = 90° rotation)
+- Add delete key to remove selected object
+- Update rendering to handle rotated objects
+- **Deliverable:** Can rotate and delete objects with keyboard
+- **Dependencies:** 3.1
+
+---
+
+## PHASE 4: Context Menu & Advanced Editing
+**Goal:** Right-click menu for detailed object editing
+
+### Step 4.1 - Context Menu System
+- Create `js/contextMenu.js` - Right-click menu display
+- Create `css/controls.css` - Style the context menu
+- Menu appears on right-click on object
+- **Deliverable:** Context menu appears and closes properly
+- **Dependencies:** 3.1
+
+### Step 4.2 - Edit Properties Modal/Form
+- Create forms for editing dimensions, position, color, name
+- Update object data on submit
+- Refresh canvas rendering
+- **Deliverable:** Can edit all object properties via context menu
+- **Dependencies:** 4.1
+
+### Step 4.3 - Collision Toggle Per Object
+- Add checkbox in edit form to toggle collision
+- Update collision detection to respect this flag
+- **Deliverable:** Can stack objects by disabling collision
+- **Dependencies:** 4.2, 2.4
+
+---
+
+## PHASE 5: Multiple Views
+**Goal:** Switch between top-down, front, left, right views
+
+### Step 5.1 - View Management System
+- Create `js/views.js` - Track current view state
+- Add view switching buttons and hotkeys (1,2,3,4)
+- Create `css/views.css` - Style view controls
+- **Deliverable:** Can switch views (even if they don't render differently yet)
+- **Dependencies:** None (standalone)
+
+### Step 5.2 - Side View Rendering
+- Extend `js/renderer.js` with side view logic
+- Implement front view (show width and height)
+- Implement left/right views (show length and height)
+- Handle stacked objects correctly
+- **Deliverable:** All four views render correctly
+- **Dependencies:** 5.1, 2.2
+
+### Step 5.3 - View-Specific Rulers
+- Add appropriate measurements for each view
+- Update ruler display when switching views
+- **Deliverable:** Rulers show correct measurements in all views
+- **Dependencies:** 5.2
+
+---
+
+## PHASE 6: Architectural Features
+**Goal:** Add windows and doors
+
+### Step 6.1 - Window System
+- Extend `js/room.js` to store windows
+- Create window creation form
+- Render windows in side views only (as cutouts)
+- **Deliverable:** Can add and see windows in side views
+- **Dependencies:** 5.2
+
+### Step 6.2 - Door System
+- Extend `js/room.js` to store doors
+- Create door creation form
+- Render doors in side views (cutouts) and top view (swing arc)
+- **Deliverable:** Can add and see doors in all views
+- **Dependencies:** 6.1, 5.2
+
+---
+
+## PHASE 7: Statistics & Polish
+**Goal:** Real-time statistics and visual polish
+
+### Step 7.1 - Statistics Calculation
+- Create `js/statistics.js` - Calculate all metrics
+- Create `css/stats.css` - Style statistics panel
+- **Deliverable:** Statistics display and update in real-time
+- **Dependencies:** 2.1 (needs object data)
+
+### Step 7.2 - UI Polish
+- Add loading states, better visual feedback
+- Improve error handling and user messages
+- Refine colors, spacing, overall aesthetics
+- **Deliverable:** Professional-looking, smooth interface
+- **Dependencies:** All previous phases
+
+---
+
+## PHASE 8: Export Functionality
+**Goal:** Export each view as PNG
+
+### Step 8.1 - PNG Export System
+- Create `js/export.js` - Canvas to PNG conversion
+- Add export button with filename generation
+- Create `js/utils.js` - Helper functions for dates, formatting
+- **Deliverable:** Can export current view as PNG file
+- **Dependencies:** 5.1 (needs view management)
+
+---
+
+## Dependency Visualization
+
+```
+1.1 (HTML/CSS) ──> 1.2 (Room Data) ──> 1.3 (Canvas) ──┐
+                                                      │
+2.1 (Object Data) ────────────────────────┐          │
+                                           ↓          ↓
+                                    2.2 (Render Objects)
+                                           ↓
+                                    2.3 (Placement)
+                                           ↓
+                                    2.4 (Collision)
+                                           ↓
+                                    3.1 (Selection)
+                                      ↙        ↘
+                            3.2 (Movement)  3.3 (Rotate/Delete)
+                                  ↓
+                            4.1 (Context Menu)
+                                  ↓
+                            4.2 (Edit Form)
+                                  ↓
+                            4.3 (Collision Toggle)
+
+5.1 (View System) ──> 5.2 (Side Views) ──> 5.3 (View Rulers)
+                           ↓
+                    6.1 (Windows) ──> 6.2 (Doors)
+
+7.1 (Statistics) ──> 7.2 (Polish)
+
+8.1 (Export) [depends on 5.1]
+```
+
+---
+
+## Critical Path (Minimum Viable Product)
+
+To get a **working MVP**, you must complete:
+- 1.1 → 1.2 → 1.3 (See room)
+- 2.1 → 2.2 → 2.3 → 2.4 (Place objects)
+- 3.1 → 3.2 (Select and move objects)
+- 7.1 (Statistics)
+
+Everything else enhances but isn't strictly required for "functional."
+
+---
+
+## Recommended Build Order
+
+1. **Phase 1** (entire) - Foundation
+2. **Phase 2** (entire) - MAJOR MILESTONE: Object placement working
+3. **Phase 3** (Steps 3.1, 3.2) - Basic manipulation
+4. **Phase 7** (Step 7.1) - Quick win: see stats working
+5. **Phase 3** (Step 3.3) - Complete basic manipulation
+6. **Phase 4** (entire) - Advanced editing
+7. **Phase 5** (entire) - Multiple views
+8. **Phase 6** (entire) - Windows/doors
+9. **Phase 7** (Step 7.2) - Final polish
+10. **Phase 8** (entire) - Export functionality
+
+---
+
+## Implementation Notes for Developers
+
+### Starting Phase 1
+When beginning development, create all files in the suggested structure first, even if they're empty. This prevents import errors and allows you to build incrementally.
+
+### Testing Checkpoints
+After each phase step, test thoroughly:
+- Does it work as expected?
+- Are there console errors?
+- Does it break any previous functionality?
+
+### Common Pitfalls to Avoid
+- Not validating user input (negative dimensions, etc.)
+- Forgetting to update canvas after data changes
+- Not handling edge cases in collision detection
+- Coordinate system confusion between canvas pixels and room centimeters
+
+### Performance Considerations
+- Redraw canvas only when necessary
+- Use requestAnimationFrame for smooth interactions
+- Limit re-calculations during drag operations
+
+---
+
 **Project Type:** Web Application  
 **Technologies:** HTML5, CSS3, Vanilla JavaScript  
 **Primary Use Case:** Interior space planning and furniture arrangement  
 **Target Users:** Anyone needing to visualize if items fit in a space  
 
-**Document Version:** 1.0  
+**Document Version:** 2.0  
 **Last Updated:** November 2025
