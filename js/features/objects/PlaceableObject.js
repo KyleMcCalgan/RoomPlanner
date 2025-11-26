@@ -34,11 +34,26 @@ class PlaceableObject {
     }
 
     /**
-     * Rotate object
-     * @param {number} degrees - Rotation in degrees (0, 90, 180, 270)
+     * Rotate object by 90 degrees and swap dimensions
+     * @param {number} degrees - Target rotation in degrees (0, 90, 180, 270)
      */
     rotate(degrees) {
-        this.rotation = degrees % 360;
+        const oldRotation = this.rotation;
+        const newRotation = degrees % 360;
+
+        // Determine if we need to swap dimensions
+        // Swap happens when transitioning between 0/180 and 90/270
+        const oldIsVertical = (oldRotation === 90 || oldRotation === 270);
+        const newIsVertical = (newRotation === 90 || newRotation === 270);
+
+        // If changing orientation, swap width and length
+        if (oldIsVertical !== newIsVertical) {
+            const temp = this.dimensions.width;
+            this.dimensions.width = this.dimensions.length;
+            this.dimensions.length = temp;
+        }
+
+        this.rotation = newRotation;
     }
 
     /**

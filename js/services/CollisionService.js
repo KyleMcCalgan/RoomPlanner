@@ -145,4 +145,56 @@ class CollisionService {
     getStackingOrder(objects) {
         return [...objects].sort((a, b) => a.creationOrder - b.creationOrder);
     }
+
+    /**
+     * Find all objects that overlap with the given object (ignoring collision settings)
+     * @param {PlaceableObject} object - Object to check
+     * @param {Array<PlaceableObject>} allObjects - All other objects
+     * @returns {Array<PlaceableObject>} Array of overlapping objects
+     */
+    findOverlappingObjects(object, allObjects) {
+        const overlapping = [];
+        const bounds1 = object.getBounds();
+
+        for (const other of allObjects) {
+            if (other.id !== object.id) {
+                const bounds2 = other.getBounds();
+                if (rectanglesOverlap(bounds1, bounds2)) {
+                    overlapping.push(other);
+                }
+            }
+        }
+
+        return overlapping;
+    }
+
+    /**
+     * Calculate the appropriate Z position for stacking an object on others
+     * When an object overlaps with others that have collision disabled,
+     * it should stack on top of the highest one
+     * @param {PlaceableObject} object - Object to stack
+     * @param {Array<PlaceableObject>} allObjects - All other objects
+     * @returns {number} Calculated Z position (in cm)
+     */
+    calculateStackingZ(object, allObjects) {
+        const overlapping = this.findOverlappingObjects(object, allObjects);
+
+        // Filter for objects with collision disabled (can stack on these)
+        const stackableObjects = overlapping.filter(obj => !obj.collisionEnabled);
+
+        if (stackableObjects.length === 0) {
+            return 0; // No objects to stack on, place on ground
+        }
+
+        // Find the highest top surface among overlapping objects
+        let maxTopZ = 0;
+        for (const obj of stackableObjects) {
+            const topZ = obj.position.z + obj.dimensions.height;
+            if (topZ > maxTopZ) {
+                maxTopZ = topZ;
+            }
+        }
+
+        return maxTopZ;
+    }
 }

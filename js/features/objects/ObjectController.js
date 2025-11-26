@@ -2,7 +2,7 @@
  * ObjectController - Handles object interactions and placement logic
  */
 class ObjectController {
-    constructor(objectManager, roomController, viewport, eventBus, objectView, collisionService, room) {
+    constructor(objectManager, roomController, viewport, eventBus, objectView, collisionService, room, viewManager) {
         this.objectManager = objectManager;
         this.roomController = roomController;
         this.viewport = viewport;
@@ -10,6 +10,7 @@ class ObjectController {
         this.objectView = objectView;
         this.collisionService = collisionService;
         this.room = room;
+        this.viewManager = viewManager;
 
         this.state = {
             mode: 'READY', // READY, CREATING, EDITING
@@ -89,14 +90,32 @@ class ObjectController {
     placeObject(e) {
         if (!this.state.pendingObject) return;
 
+        // Only allow placement in top view
+        const currentView = this.viewManager.getCurrentView();
+        if (currentView !== 'TOP') {
+            alert('Please switch to Top View (press 1) to place objects');
+            return;
+        }
+
         const mousePos = this.viewport.getMousePos(e);
         const roomPos = this.viewport.toRoomCoords(mousePos.x, mousePos.y);
 
-        // Set object position
+        // Set object X,Y position (Z will be calculated)
         this.state.pendingObject.move(roomPos.x, roomPos.y, 0);
 
-        // Check for collisions
+        // Get all existing objects
         const allObjects = this.objectManager.getAllObjects();
+
+        // Calculate appropriate Z position for stacking
+        const stackingZ = this.collisionService.calculateStackingZ(
+            this.state.pendingObject,
+            allObjects
+        );
+
+        // Update Z position
+        this.state.pendingObject.position.z = stackingZ;
+
+        // Check for collisions (boundary and enabled collision objects)
         const collisionResult = this.collisionService.canPlace(
             this.state.pendingObject,
             allObjects,
@@ -107,7 +126,7 @@ class ObjectController {
             if (collisionResult.reason === 'outside_room') {
                 alert('Object cannot be placed outside the room boundaries');
             } else if (collisionResult.reason === 'object_collision') {
-                alert('Object collides with another object. Disable collision to allow overlapping.');
+                alert('Object collides with another object. Disable collision on the other object to stack.');
             }
             return;
         }
@@ -135,8 +154,17 @@ class ObjectController {
     selectObject(e) {
         const mousePos = this.viewport.getMousePos(e);
         const roomPos = this.viewport.toRoomCoords(mousePos.x, mousePos.y);
+        const currentView = this.viewManager.getCurrentView();
 
-        const obj = this.objectManager.findObjectAtPosition(roomPos.x, roomPos.y);
+        let obj = null;
+
+        if (currentView === 'TOP') {
+            // Top view: use X,Y coordinates
+            obj = this.objectManager.findObjectAtPosition(roomPos.x, roomPos.y);
+        } else {
+            // Side views: need to check X/Y and Z based on view
+            obj = this.findObjectAtSideViewPosition(roomPos.x, roomPos.y, currentView);
+        }
 
         if (obj) {
             this.objectManager.selectObject(obj.id);
@@ -153,6 +181,60 @@ class ObjectController {
     }
 
     /**
+     * Find object at position in side view
+     * @param {number} clickX - Click X in room coords
+     * @param {number} clickY - Click Y in room coords
+     * @param {string} view - Current view (FRONT, LEFT, RIGHT)
+     * @returns {PlaceableObject|null} Found object or null
+     */
+    findObjectAtSideViewPosition(clickX, clickY, view) {
+        const roomHeight = this.room.dimensions.height;
+        const allObjects = this.objectManager.getAllObjects();
+
+        // Convert click Y to Z coordinate (invert since ground is at bottom)
+        const clickZ = roomHeight - clickY;
+
+        for (const obj of allObjects) {
+            let minX, maxX, minZ, maxZ;
+
+            if (view === 'FRONT') {
+                // Front view: X horizontal, Z vertical
+                minX = obj.position.x;
+                maxX = obj.position.x + obj.dimensions.width;
+                minZ = obj.position.z;
+                maxZ = obj.position.z + obj.dimensions.height;
+
+                if (clickX >= minX && clickX <= maxX && clickZ >= minZ && clickZ <= maxZ) {
+                    return obj;
+                }
+            } else if (view === 'LEFT') {
+                // Left view: Y horizontal, Z vertical
+                minX = obj.position.y;
+                maxX = obj.position.y + obj.dimensions.length;
+                minZ = obj.position.z;
+                maxZ = obj.position.z + obj.dimensions.height;
+
+                if (clickX >= minX && clickX <= maxX && clickZ >= minZ && clickZ <= maxZ) {
+                    return obj;
+                }
+            } else if (view === 'RIGHT') {
+                // Right view: Y horizontal but REVERSED, Z vertical
+                const roomLength = this.room.dimensions.length;
+                minX = roomLength - obj.position.y - obj.dimensions.length;
+                maxX = roomLength - obj.position.y;
+                minZ = obj.position.z;
+                maxZ = obj.position.z + obj.dimensions.height;
+
+                if (clickX >= minX && clickX <= maxX && clickZ >= minZ && clickZ <= maxZ) {
+                    return obj;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Handle mouse down (start drag)
      * @param {MouseEvent} e - Mouse event
      */
@@ -161,6 +243,10 @@ class ObjectController {
 
         const selectedObj = this.objectManager.getSelectedObject();
         if (!selectedObj) return;
+
+        // Only allow dragging in top view
+        const currentView = this.viewManager.getCurrentView();
+        if (currentView !== 'TOP') return;
 
         const mousePos = this.viewport.getMousePos(e);
         const roomPos = this.viewport.toRoomCoords(mousePos.x, mousePos.y);
@@ -194,11 +280,20 @@ class ObjectController {
                 const newX = this.state.dragObjectStartPos.x + dx;
                 const newY = this.state.dragObjectStartPos.y + dy;
 
-                // Temporarily move to new position
-                selectedObj.move(newX, newY);
+                // Temporarily move to new X,Y position
+                selectedObj.move(newX, newY, selectedObj.position.z);
+
+                // Recalculate Z position based on what's underneath
+                const allObjects = this.objectManager.getAllObjects();
+                const stackingZ = this.collisionService.calculateStackingZ(
+                    selectedObj,
+                    allObjects
+                );
+
+                // Update Z position
+                selectedObj.position.z = stackingZ;
 
                 // Check if position is valid
-                const allObjects = this.objectManager.getAllObjects();
                 const collisionResult = this.collisionService.canPlace(
                     selectedObj,
                     allObjects,
@@ -209,12 +304,14 @@ class ObjectController {
                     // Snap back to original position if invalid
                     selectedObj.move(
                         this.state.dragObjectStartPos.x,
-                        this.state.dragObjectStartPos.y
+                        this.state.dragObjectStartPos.y,
+                        this.state.dragObjectStartPos.z
                     );
                 } else {
                     // Update drag start position for smooth dragging
                     this.state.dragObjectStartPos.x = newX;
                     this.state.dragObjectStartPos.y = newY;
+                    this.state.dragObjectStartPos.z = stackingZ;
                     this.state.dragStartPos = roomPos;
 
                     this.eventBus.emit('object:moved', { object: selectedObj });
@@ -245,7 +342,8 @@ class ObjectController {
                     // Snap back to original position
                     selectedObj.move(
                         this.state.dragObjectStartPos.x,
-                        this.state.dragObjectStartPos.y
+                        this.state.dragObjectStartPos.y,
+                        this.state.dragObjectStartPos.z
                     );
                     this.eventBus.emit('render-requested');
                 }
@@ -266,8 +364,15 @@ class ObjectController {
 
         const mousePos = this.viewport.getMousePos(e);
         const roomPos = this.viewport.toRoomCoords(mousePos.x, mousePos.y);
+        const currentView = this.viewManager.getCurrentView();
 
-        const obj = this.objectManager.findObjectAtPosition(roomPos.x, roomPos.y);
+        let obj = null;
+
+        if (currentView === 'TOP') {
+            obj = this.objectManager.findObjectAtPosition(roomPos.x, roomPos.y);
+        } else {
+            obj = this.findObjectAtSideViewPosition(roomPos.x, roomPos.y, currentView);
+        }
 
         if (obj) {
             this.objectManager.selectObject(obj.id);

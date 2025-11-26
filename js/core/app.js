@@ -21,17 +21,21 @@ class SpacePlannerApp {
 
         // Initialize views
         this.roomView = new RoomView(this.roomController, this.eventBus);
-        this.objectView = new ObjectView(this.eventBus);
+        this.objectView = new ObjectView(this.eventBus, this.objectManager);
 
         // Initialize renderers
         this.roomRenderer = new RoomRenderer(this.room, this.viewport);
-        this.objectRenderer = new ObjectRenderer(this.objectManager, this.viewport);
+        this.objectRenderer = new ObjectRenderer(this.objectManager, this.viewport, this.room);
 
         // Initialize services
         this.statisticsService = new StatisticsService();
         this.collisionService = new CollisionService();
 
-        // Initialize object controller
+        // Initialize view system
+        this.viewManager = new ViewManager(this.eventBus);
+        this.viewRenderer = new ViewRenderer(this.viewManager, this.roomRenderer, this.objectRenderer);
+
+        // Initialize object controller (needs viewManager for click detection)
         this.objectController = new ObjectController(
             this.objectManager,
             this.roomController,
@@ -39,7 +43,8 @@ class SpacePlannerApp {
             this.eventBus,
             this.objectView,
             this.collisionService,
-            this.room
+            this.room,
+            this.viewManager
         );
 
         // Setup event listeners
@@ -90,6 +95,9 @@ class SpacePlannerApp {
         this.eventBus.on('render-requested', (data) => {
             this.render(data ? data.mouseEvent : null);
         });
+        this.eventBus.on('view:changed', () => {
+            this.render();
+        });
     }
 
     /**
@@ -122,14 +130,11 @@ class SpacePlannerApp {
         // Clear canvas
         this.viewport.clear();
 
-        // Render room
-        this.roomRenderer.render();
+        // Use ViewRenderer to render based on current view
+        this.viewRenderer.render();
 
-        // Render objects
-        this.objectRenderer.render();
-
-        // Render preview if in creating mode
-        if (mouseEvent && this.objectController.getMode() === 'CREATING') {
+        // Render preview if in creating mode (top view only)
+        if (mouseEvent && this.objectController.getMode() === 'CREATING' && this.viewManager.getCurrentView() === 'TOP') {
             const pendingObj = this.objectController.getPendingObject();
             if (pendingObj) {
                 const mousePos = this.viewport.getMousePos(mouseEvent);

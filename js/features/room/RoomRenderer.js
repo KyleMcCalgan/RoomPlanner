@@ -8,23 +8,138 @@ class RoomRenderer {
     }
 
     /**
-     * Render the room (top-down view for now)
+     * Render the room
+     * @param {string} view - Current view (TOP, FRONT, LEFT, RIGHT)
      */
-    render() {
+    render(view = 'TOP') {
         const ctx = this.viewport.getContext();
 
-        // Draw rulers
-        this.drawRulers(ctx);
-
-        // Draw room outline
-        this.drawRoomOutline(ctx);
+        switch(view) {
+            case 'TOP':
+                this.renderTopView(ctx);
+                break;
+            case 'FRONT':
+                this.renderFrontView(ctx);
+                break;
+            case 'LEFT':
+                this.renderLeftView(ctx);
+                break;
+            case 'RIGHT':
+                this.renderRightView(ctx);
+                break;
+        }
     }
 
     /**
-     * Draw measurement rulers
+     * Render top-down view
      * @param {CanvasRenderingContext2D} ctx - Canvas context
      */
-    drawRulers(ctx) {
+    renderTopView(ctx) {
+        // Draw rulers
+        this.drawRulersTopView(ctx);
+
+        // Draw room outline
+        this.drawRoomOutlineTopView(ctx);
+    }
+
+    /**
+     * Render front view (looking from south to north)
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     */
+    renderFrontView(ctx) {
+        const { width, height } = this.room.dimensions;
+
+        // Draw rulers
+        this.drawHorizontalRuler(ctx, width, 'top');
+        this.drawVerticalRuler(ctx, height, 'left');
+
+        // Draw room as side elevation
+        const topLeft = this.viewport.toCanvasCoords(0, 0);
+        const bottomRight = this.viewport.toCanvasCoords(width, height);
+
+        const w = bottomRight.x - topLeft.x;
+        const h = bottomRight.y - topLeft.y;
+
+        // Draw room background
+        drawRect(ctx, topLeft.x, topLeft.y, w, h, '#3A3A3C');
+
+        // Draw grid
+        this.drawGrid(ctx, topLeft.x, topLeft.y, w, h);
+
+        // Draw border
+        drawStrokeRect(ctx, topLeft.x, topLeft.y, w, h, '#5B9BD5', 2);
+
+        // Draw floor line
+        drawLine(ctx, topLeft.x, bottomRight.y, bottomRight.x, bottomRight.y, '#888', 2);
+    }
+
+    /**
+     * Render left view (looking from west to east)
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     */
+    renderLeftView(ctx) {
+        const { length, height } = this.room.dimensions;
+
+        // Draw rulers
+        this.drawHorizontalRuler(ctx, length, 'top');
+        this.drawVerticalRuler(ctx, height, 'left');
+
+        // Draw room as side elevation
+        const topLeft = this.viewport.toCanvasCoords(0, 0);
+        const bottomRight = this.viewport.toCanvasCoords(length, height);
+
+        const w = bottomRight.x - topLeft.x;
+        const h = bottomRight.y - topLeft.y;
+
+        // Draw room background
+        drawRect(ctx, topLeft.x, topLeft.y, w, h, '#3A3A3C');
+
+        // Draw grid
+        this.drawGrid(ctx, topLeft.x, topLeft.y, w, h);
+
+        // Draw border
+        drawStrokeRect(ctx, topLeft.x, topLeft.y, w, h, '#5B9BD5', 2);
+
+        // Draw floor line
+        drawLine(ctx, topLeft.x, bottomRight.y, bottomRight.x, bottomRight.y, '#888', 2);
+    }
+
+    /**
+     * Render right view (looking from east to west)
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     */
+    renderRightView(ctx) {
+        const { length, height } = this.room.dimensions;
+
+        // Draw rulers
+        this.drawHorizontalRuler(ctx, length, 'top');
+        this.drawVerticalRuler(ctx, height, 'left');
+
+        // Draw room as side elevation
+        const topLeft = this.viewport.toCanvasCoords(0, 0);
+        const bottomRight = this.viewport.toCanvasCoords(length, height);
+
+        const w = bottomRight.x - topLeft.x;
+        const h = bottomRight.y - topLeft.y;
+
+        // Draw room background
+        drawRect(ctx, topLeft.x, topLeft.y, w, h, '#3A3A3C');
+
+        // Draw grid
+        this.drawGrid(ctx, topLeft.x, topLeft.y, w, h);
+
+        // Draw border
+        drawStrokeRect(ctx, topLeft.x, topLeft.y, w, h, '#5B9BD5', 2);
+
+        // Draw floor line
+        drawLine(ctx, topLeft.x, bottomRight.y, bottomRight.x, bottomRight.y, '#888', 2);
+    }
+
+    /**
+     * Draw measurement rulers for top view
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     */
+    drawRulersTopView(ctx) {
         const { width, length } = this.room.dimensions;
 
         // Top ruler (horizontal - width)
@@ -109,10 +224,10 @@ class RoomRenderer {
     }
 
     /**
-     * Draw room outline
+     * Draw room outline for top view
      * @param {CanvasRenderingContext2D} ctx - Canvas context
      */
-    drawRoomOutline(ctx) {
+    drawRoomOutlineTopView(ctx) {
         const topLeft = this.viewport.toCanvasCoords(0, 0);
         const bottomRight = this.viewport.toCanvasCoords(
             this.room.dimensions.width,

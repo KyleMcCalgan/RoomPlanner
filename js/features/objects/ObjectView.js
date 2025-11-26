@@ -2,8 +2,9 @@
  * ObjectView - Handles object UI components and modals
  */
 class ObjectView {
-    constructor(eventBus) {
+    constructor(eventBus, objectManager) {
         this.eventBus = eventBus;
+        this.objectManager = objectManager;
 
         // Get DOM elements for create modal
         this.modal = document.getElementById('objectModal');
@@ -116,8 +117,13 @@ class ObjectView {
      * Show the object creation modal
      */
     showModal() {
+        // Auto-number the object name
+        const nextNumber = this.objectManager.getAllObjects().length + 1;
+        this.nameInput.value = nextNumber.toString();
+
         this.modal.classList.add('active');
         this.nameInput.focus();
+        this.nameInput.select(); // Select the text so user can easily type over it
     }
 
     /**
