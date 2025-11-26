@@ -5,7 +5,7 @@ class ObjectView {
     constructor(eventBus) {
         this.eventBus = eventBus;
 
-        // Get DOM elements
+        // Get DOM elements for create modal
         this.modal = document.getElementById('objectModal');
         this.form = document.getElementById('objectForm');
         this.addBtn = document.getElementById('addObjectBtn');
@@ -17,10 +17,29 @@ class ObjectView {
         this.heightInput = document.getElementById('objectHeight');
         this.colorInput = document.getElementById('objectColor');
 
+        // Get DOM elements for edit modal
+        this.editModal = document.getElementById('editModal');
+        this.editForm = document.getElementById('editForm');
+        this.cancelEditBtn = document.getElementById('cancelEditBtn');
+
+        this.editNameInput = document.getElementById('editName');
+        this.editWidthInput = document.getElementById('editWidth');
+        this.editLengthInput = document.getElementById('editLength');
+        this.editHeightInput = document.getElementById('editHeight');
+        this.editColorInput = document.getElementById('editColor');
+        this.editPosXInput = document.getElementById('editPosX');
+        this.editPosYInput = document.getElementById('editPosY');
+        this.editPosZInput = document.getElementById('editPosZ');
+        this.editCollisionInput = document.getElementById('editCollision');
+
+        // Context menu
         this.contextMenu = document.getElementById('contextMenu');
         this.editMenuItem = document.getElementById('editObjectMenu');
         this.deleteMenuItem = document.getElementById('deleteObjectMenu');
         this.toggleCollisionMenuItem = document.getElementById('toggleCollisionMenu');
+
+        // Track object being edited
+        this.editingObjectId = null;
 
         this.setupEventListeners();
     }
@@ -51,9 +70,23 @@ class ObjectView {
                 if (this.modal.classList.contains('active')) {
                     this.hideModal();
                 }
+                if (this.editModal.classList.contains('active')) {
+                    this.hideEditModal();
+                }
                 if (this.contextMenu.classList.contains('active')) {
                     this.hideContextMenu();
                 }
+            }
+        });
+
+        // Edit modal event listeners
+        this.cancelEditBtn.addEventListener('click', () => this.hideEditModal());
+
+        this.editForm.addEventListener('submit', (e) => this.handleEditSubmit(e));
+
+        this.editModal.addEventListener('click', (e) => {
+            if (e.target === this.editModal) {
+                this.hideEditModal();
             }
         });
 
@@ -127,8 +160,16 @@ class ObjectView {
      * Show context menu at position
      * @param {number} x - X position
      * @param {number} y - Y position
+     * @param {PlaceableObject} object - The object being context-menued
      */
-    showContextMenu(x, y) {
+    showContextMenu(x, y, object) {
+        // Update toggle collision text based on current state
+        if (object) {
+            this.toggleCollisionMenuItem.textContent = object.collisionEnabled
+                ? '✓ Collision Enabled'
+                : '✗ Collision Disabled';
+        }
+
         this.contextMenu.style.left = `${x}px`;
         this.contextMenu.style.top = `${y}px`;
         this.contextMenu.classList.add('active');
@@ -153,5 +194,75 @@ class ObjectView {
             'EDITING': 'Editing mode'
         };
         indicator.textContent = modeTexts[mode] || mode;
+    }
+
+    /**
+     * Show the edit modal with object data
+     * @param {PlaceableObject} object - The object to edit
+     */
+    showEditModal(object) {
+        if (!object) return;
+
+        this.editingObjectId = object.id;
+
+        // Convert from cm to meters for display
+        this.editNameInput.value = object.name;
+        this.editWidthInput.value = (object.dimensions.width / 100).toFixed(2);
+        this.editLengthInput.value = (object.dimensions.length / 100).toFixed(2);
+        this.editHeightInput.value = (object.dimensions.height / 100).toFixed(2);
+        this.editColorInput.value = object.color;
+        this.editPosXInput.value = (object.position.x / 100).toFixed(2);
+        this.editPosYInput.value = (object.position.y / 100).toFixed(2);
+        this.editPosZInput.value = (object.position.z / 100).toFixed(2);
+        this.editCollisionInput.checked = object.collisionEnabled;
+
+        this.editModal.classList.add('active');
+        this.editNameInput.focus();
+    }
+
+    /**
+     * Hide the edit modal
+     */
+    hideEditModal() {
+        this.editModal.classList.remove('active');
+        this.editingObjectId = null;
+    }
+
+    /**
+     * Handle edit form submission
+     * @param {Event} e - Form submit event
+     */
+    handleEditSubmit(e) {
+        e.preventDefault();
+
+        if (!this.editingObjectId) {
+            console.error('No object is being edited');
+            return;
+        }
+
+        // Convert from meters to cm (internal storage)
+        const updatedData = {
+            id: this.editingObjectId,
+            name: this.editNameInput.value.trim(),
+            width: parseFloat(this.editWidthInput.value) * 100,
+            length: parseFloat(this.editLengthInput.value) * 100,
+            height: parseFloat(this.editHeightInput.value) * 100,
+            color: this.editColorInput.value,
+            posX: parseFloat(this.editPosXInput.value) * 100,
+            posY: parseFloat(this.editPosYInput.value) * 100,
+            posZ: parseFloat(this.editPosZInput.value) * 100,
+            collisionEnabled: this.editCollisionInput.checked
+        };
+
+        // Validate
+        if (!updatedData.name) {
+            alert('Please enter a name for the object');
+            return;
+        }
+
+        // Emit event to update object
+        this.eventBus.emit('object:update-requested', updatedData);
+
+        this.hideEditModal();
     }
 }

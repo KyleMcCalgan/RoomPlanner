@@ -42,6 +42,8 @@ class ObjectController {
         document.addEventListener('keydown', (e) => this.handleKeyDown(e));
 
         // Object edit/delete/toggle collision
+        this.eventBus.on('object:edit-requested', () => this.editSelectedObject());
+        this.eventBus.on('object:update-requested', (data) => this.updateObject(data));
         this.eventBus.on('object:delete-requested', () => this.deleteSelectedObject());
         this.eventBus.on('object:toggle-collision-requested', () => this.toggleCollision());
     }
@@ -270,7 +272,7 @@ class ObjectController {
         if (obj) {
             this.objectManager.selectObject(obj.id);
             this.state.mode = 'EDITING';
-            this.objectView.showContextMenu(e.clientX, e.clientY);
+            this.objectView.showContextMenu(e.clientX, e.clientY, obj);
             this.eventBus.emit('render-requested');
         }
     }
@@ -346,6 +348,72 @@ class ObjectController {
         selectedObj.toggleCollision();
 
         this.eventBus.emit('object:collision-toggled', { object: selectedObj });
+        this.eventBus.emit('render-requested');
+    }
+
+    /**
+     * Edit selected object
+     */
+    editSelectedObject() {
+        const selectedObj = this.objectManager.getSelectedObject();
+        if (!selectedObj) return;
+
+        // Show edit modal with object data
+        this.objectView.showEditModal(selectedObj);
+    }
+
+    /**
+     * Update object with new data
+     * @param {Object} data - Updated object data
+     */
+    updateObject(data) {
+        const obj = this.objectManager.getObject(data.id);
+        if (!obj) {
+            console.error('Object not found:', data.id);
+            return;
+        }
+
+        // Store original position for rollback if needed
+        const originalPosition = { ...obj.position };
+        const originalDimensions = { ...obj.dimensions };
+
+        // Update object properties
+        obj.name = data.name;
+        obj.dimensions.width = data.width;
+        obj.dimensions.length = data.length;
+        obj.dimensions.height = data.height;
+        obj.color = data.color;
+        obj.position.x = data.posX;
+        obj.position.y = data.posY;
+        obj.position.z = data.posZ;
+        obj.collisionEnabled = data.collisionEnabled;
+
+        // Check if new configuration is valid
+        const allObjects = this.objectManager.getAllObjects();
+        const collisionResult = this.collisionService.canPlace(
+            obj,
+            allObjects,
+            this.room
+        );
+
+        if (!collisionResult.canPlace) {
+            // Rollback changes
+            obj.position = originalPosition;
+            obj.dimensions = originalDimensions;
+
+            if (collisionResult.reason === 'outside_room') {
+                alert('Object cannot be placed outside the room boundaries with the given dimensions or position');
+            } else if (collisionResult.reason === 'object_collision') {
+                alert('Object would collide with another object. Enable "Disable Collision" or adjust dimensions/position.');
+            }
+
+            // Re-show edit modal so user can adjust
+            this.objectView.showEditModal(obj);
+            return;
+        }
+
+        // Emit update event
+        this.eventBus.emit('object:updated', { object: obj });
         this.eventBus.emit('render-requested');
     }
 

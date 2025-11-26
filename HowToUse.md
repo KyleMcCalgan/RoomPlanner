@@ -6,6 +6,41 @@ A web-based space planning application that allows users to check if items will 
 
 ---
 
+## Current Implementation Status
+
+**Last Updated:** November 2025
+**Completed Phases:** 1-4 (Foundation, Objects, Interactions, Collision Detection)
+**Remaining Phases:** 5-10 (Editing, Multiple Views, Windows/Doors, Export, Polish)
+
+### ✅ What's Working Now:
+- ✓ Room creation and visualization with grid pattern
+- ✓ Object creation, placement, movement, rotation, deletion
+- ✓ Collision detection with room boundaries and other objects
+- ✓ Per-object collision toggle for intentional overlapping
+- ✓ Real-time statistics with accurate overlap handling
+- ✓ Dark theme interface
+- ✓ Top-down view rendering
+- ✓ Transparent objects with colored outlines
+
+### 🔄 Key Design Changes from Original Spec:
+1. **Dark Theme:** Changed from light to dark color scheme for better visibility
+2. **No Header:** Removed top header bar; controls in left panel, toggle in footer
+3. **Meters Display:** Units shown in meters (m) for user input/display, stored internally as cm
+4. **Grid Pattern:** 1-meter grid overlay on room floor for spatial reference
+5. **Transparent Objects:** Objects render with 15% fill opacity, 100% outline opacity
+6. **Panel Position:** Side panel on left instead of right, collapsible
+7. **Canvas Size:** Fixed 800x600 canvas with maximized viewport usage
+
+### 📋 Still To Implement:
+- Phase 5: Full object editing modal with fine-tune controls
+- Phase 6: Multiple views (Front, Left, Right side views)
+- Phase 7: Windows and doors with architectural rendering
+- Phase 8: Statistics refinements (mostly complete)
+- Phase 9: PNG export functionality
+- Phase 10: Final polish and testing
+
+---
+
 ## Core Philosophy
 
 **File Organization:** Object-oriented, feature-based structure
@@ -98,71 +133,77 @@ space-planner/
 
 ---
 
-## User Interface Layout
+## User Interface Layout (CURRENT IMPLEMENTATION)
 
 ### Main Layout Structure
 
 ```
-┌────────────────────────────────────────────────────────────────┐
-│  Space Planning Tool                              [≡] [Export]  │  Header
-├────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│                                                                  │
-│                     MAIN CANVAS AREA                            │  80% of viewport
-│                  (Fixed 800x600 or similar)                     │
-│                                                                  │
-│                                                                  │
-│                                                                  │
-├──────────────────┬─────────────────────────────────────────────┤
-│  View Selector   │  Current Mode Indicator                      │  Footer
-│  [1] [2] [3] [4] │  (Creating/Editing/Viewing)                │
-└──────────────────┴─────────────────────────────────────────────┘
-
-    [Collapsible Side Panel - Toggled via ≡ button]
-    ┌──────────────────────┐
-    │ Control Panel        │
-    │ ├─ Room Setup        │
-    │ ├─ Add Object        │
-    │ ├─ Add Window/Door   │
-    │ └─ Settings          │
-    │                      │
-    │ Statistics Panel     │
-    │ ├─ Floor Space       │
-    │ ├─ Space Used        │
-    │ ├─ Objects: X        │
-    │ ├─ Total Volume      │
-    │ ├─ Tallest Object    │
-    │ └─ Remaining Height  │
-    └──────────────────────┘
+┌─────────────┬──────────────────────────────────────────────────┐
+│             │                                                  │
+│  CONTROLS   │                                                  │
+│  PANEL      │                                                  │
+│  (Left)     │           MAIN CANVAS AREA                      │
+│             │           (Fixed 800x600)                        │
+│ Room Setup  │       Dark background with grid                 │
+│ Add Object  │                                                  │
+│ Add Window  │                                                  │
+│ Add Door    │                                                  │
+│ Export View │                                                  │
+│             │                                                  │
+│ STATISTICS  │                                                  │
+│  Floor: Xm² │                                                  │
+│  Used: X%   │                                                  │
+│  Objects: X │                                                  │
+│  Volume: Xm³│                                                  │
+│  Tallest: Xm│                                                  │
+│  Remain: Xm │                                                  │
+│             │                                                  │
+└─────────────┴──────────────────────────────────────────────────┤
+│ [≡] [1] [2] [3] [4]                            Mode: Ready     │  Footer
+└────────────────────────────────────────────────────────────────┘
 ```
 
 ### Layout Details
 
-**Header:**
+**Left Side Panel (280px, Collapsible):**
 
-- Title on left
-- Menu toggle (≡) and Export button on right
-- Always visible
+- **Controls Section:**
+  - Room Setup (opens modal for dimensions)
+  - Add Object (opens modal for object properties)
+  - Add Window (disabled - Phase 7)
+  - Add Door (disabled - Phase 7)
+  - Export View (placeholder - Phase 9)
+- **Statistics Section:**
+  - Floor Space (m²)
+  - Space Used (%)
+  - Object Count
+  - Total Volume (m³)
+  - Tallest Object (m)
+  - Remaining Height (m)
+- Collapses completely off-screen when toggled
+- Smooth slide animation
 
-**Main Canvas:**
+**Main Canvas (800x600):**
 
-- Fixed size (recommend 800x600 or 1000x700)
-- Centered on screen
-- Measurement rulers displayed
-- Current view rendered here
+- Centered in remaining space
+- Dark background (#2D2D30)
+- 1-meter grid pattern (white lines, 15% opacity)
+- Room rendered with:
+  - Light gray background (#3A3A3C)
+  - Blue border (#5B9BD5)
+  - Horizontal and vertical rulers showing meters
+- Objects render as transparent (15% fill) with solid outline
+- Red diagonal lines indicate collision disabled
 
 **Footer:**
 
-- View selector buttons (1,2,3,4)
-- Mode indicator (shows current state: "Ready to Place Object", "Editing Mode", etc.)
-
-**Side Panel (Collapsible):**
-
-- Toggle via ≡ button in header
-- **Control Section:** Room setup, Add Object, Add Window/Door, Settings
-- **Statistics Section:** Real-time updates
-- Collapses to right edge when not needed
-- Smooth slide animation
+- **Left side:**
+  - ≡ Toggle panel button
+  - View selector buttons: [1] [2] [3] [4]
+    - Currently only [1] (top-down) is active
+    - [2], [3], [4] disabled (Phase 6)
+- **Right side:**
+  - Mode indicator: "Ready" / "Click to place object..." / "Editing mode"
 
 ---
 
@@ -558,59 +599,79 @@ class SpaceplannerApp {
 
 ## Implementation Phases (Revised)
 
-### Phase 1: Foundation & Room
+### ✅ Phase 1: Foundation & Room (COMPLETE)
 
 **Goal:** See a room rendered on canvas
 
-- **1.1** Create file structure, HTML/CSS skeleton, base classes
-- **1.2** Implement `Room.js`, `RoomController.js`
-- **1.3** Implement `Viewport.js` and canvas setup
-- **1.4** Implement `RoomRenderer.js` → draw room + rulers
-- **1.5** Implement `RoomView.js` → room setup modal
+- **1.1** ✓ Create file structure, HTML/CSS skeleton, base classes
+- **1.2** ✓ Implement `Room.js`, `RoomController.js`
+- **1.3** ✓ Implement `Viewport.js` and canvas setup
+- **1.4** ✓ Implement `RoomRenderer.js` → draw room + rulers + grid
+- **1.5** ✓ Implement `RoomView.js` → room setup modal
 
-**Deliverable:** Can define room dimensions and see room on canvas
+**Deliverable:** ✓ Can define room dimensions and see room on canvas
+
+**Implementation Notes:**
+- Dark theme implemented from start
+- Room has 1-meter grid overlay
+- Rulers show meters instead of cm
+- Canvas is 800x600 fixed size
 
 ---
 
-### Phase 2: Objects - Creation & Rendering
+### ✅ Phase 2: Objects - Creation & Rendering (COMPLETE)
 
 **Goal:** Create and see objects on canvas
 
-- **2.1** Implement `PlaceableObject.js` data model
-- **2.2** Implement `ObjectManager.js` for state management
-- **2.3** Implement `ObjectView.js` → object creation modal
-- **2.4** Implement `ObjectRenderer.js` → draw objects (top-down)
-- **2.5** Implement placement mode (click-to-place logic)
+- **2.1** ✓ Implement `PlaceableObject.js` data model
+- **2.2** ✓ Implement `ObjectManager.js` for state management
+- **2.3** ✓ Implement `ObjectView.js` → object creation modal
+- **2.4** ✓ Implement `ObjectRenderer.js` → draw objects (top-down)
+- **2.5** ✓ Implement placement mode (click-to-place logic)
 
-**Deliverable:** Can create objects and place them on canvas in top-down view
+**Deliverable:** ✓ Can create objects and place them on canvas in top-down view
+
+**Implementation Notes:**
+- Objects render with 15% fill opacity, 100% outline opacity
+- All measurements displayed in meters, stored as cm internally
 
 ---
 
-### Phase 3: Objects - Selection & Movement
+### ✅ Phase 3: Objects - Selection & Movement (COMPLETE)
 
 **Goal:** Interact with placed objects
 
-- **3.1** Implement `ObjectController.js` → click detection & selection
-- **3.2** Implement drag-to-move functionality
-- **3.3** Implement rotation (R key)
-- **3.4** Implement deletion (Delete key)
-- **3.5** Visual feedback for selection (highlight)
+- **3.1** ✓ Implement `ObjectController.js` → click detection & selection
+- **3.2** ✓ Implement drag-to-move functionality
+- **3.3** ✓ Implement rotation (R key)
+- **3.4** ✓ Implement deletion (Delete key)
+- **3.5** ✓ Visual feedback for selection (blue dashed outline)
 
-**Deliverable:** Can select, move, rotate, and delete objects
+**Deliverable:** ✓ Can select, move, rotate, and delete objects
+
+**Implementation Notes:**
+- Context menu implemented (right-click)
+- Toggle collision working
 
 ---
 
-### Phase 4: Collision Detection & Stacking
+### ✅ Phase 4: Collision Detection & Stacking (COMPLETE)
 
 **Goal:** Prevent objects from leaving room; enable stacking
 
-- **4.1** Implement `CollisionService.js`
-- **4.2** Boundary collision (objects can't leave room)
-- **4.3** Object-to-object collision detection
-- **4.4** Implement collision toggle per object
-- **4.5** Stacking visualization
+- **4.1** ✓ Implement `CollisionService.js`
+- **4.2** ✓ Boundary collision (objects can't leave room)
+- **4.3** ✓ Object-to-object collision detection with AABB
+- **4.4** ✓ Implement collision toggle per object
+- **4.5** ✓ Stacking visualization (Z-ordering by creation order)
 
-**Deliverable:** Collisions work; can toggle per object to stack
+**Deliverable:** ✓ Collisions work; can toggle per object to allow overlapping
+
+**Implementation Notes:**
+- Real-time collision checking during placement and dragging
+- Objects snap back to valid position if collision detected
+- Per-object collision toggle via context menu
+- StatisticsService also implemented with accurate overlap handling
 
 ---
 

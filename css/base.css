@@ -215,7 +215,7 @@ button {
     border-radius: 4px;
     box-shadow: var(--shadow-lg);
     z-index: 1000;
-    min-width: 150px;
+    min-width: 180px;
 }
 
 .context-menu.active {
@@ -226,10 +226,18 @@ button {
     padding: 0.75rem 1rem;
     cursor: pointer;
     transition: background-color 0.2s;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.context-menu-item:last-child {
+    border-bottom: none;
 }
 
 .context-menu-item:hover {
     background-color: var(--panel-bg-hover);
+    color: var(--text-primary);
 }
 
 .context-menu-item:first-child {
@@ -240,4 +248,10 @@ button {
 .context-menu-item:last-child {
     border-bottom-left-radius: 4px;
     border-bottom-right-radius: 4px;
+}
+
+/* Toggle collision specific styling */
+#toggleCollisionMenu {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.85rem;
 }

@@ -134,6 +134,69 @@
         </div>
     </div>
 
+    <!-- Object Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content modal-edit">
+            <h2>Edit Object</h2>
+            <form id="editForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="editName">Name:</label>
+                        <input type="text" id="editName" placeholder="e.g., Sofa, Table" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editColor">Color:</label>
+                        <input type="color" id="editColor">
+                    </div>
+                </div>
+
+                <h3 class="section-title">Dimensions</h3>
+                <div class="form-grid form-grid-3">
+                    <div class="form-group">
+                        <label for="editWidth">Width (m):</label>
+                        <input type="number" id="editWidth" min="0.01" max="10" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editLength">Length (m):</label>
+                        <input type="number" id="editLength" min="0.01" max="10" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editHeight">Height (m):</label>
+                        <input type="number" id="editHeight" min="0.01" max="3" step="0.01" required>
+                    </div>
+                </div>
+
+                <h3 class="section-title">Position</h3>
+                <div class="form-grid form-grid-3">
+                    <div class="form-group">
+                        <label for="editPosX">X (m):</label>
+                        <input type="number" id="editPosX" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editPosY">Y (m):</label>
+                        <input type="number" id="editPosY" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editPosZ">Z (m):</label>
+                        <input type="number" id="editPosZ" min="0" step="0.01" required>
+                    </div>
+                </div>
+
+                <div class="form-group form-group-checkbox">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="editCollision">
+                        <span>Enable Collision Detection</span>
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelEditBtn">Cancel</button>
+                    <button type="submit" class="btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Context Menu -->
     <div id="contextMenu" class="context-menu">
         <div class="context-menu-item" id="editObjectMenu">Edit Object</div>

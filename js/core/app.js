@@ -74,6 +74,10 @@ class SpacePlannerApp {
             this.render();
             this.updateStatistics();
         });
+        this.eventBus.on('object:updated', () => {
+            this.render();
+            this.updateStatistics();
+        });
         this.eventBus.on('object:collision-toggled', () => {
             this.render();
         });
