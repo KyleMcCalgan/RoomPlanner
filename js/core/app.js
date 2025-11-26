@@ -11,7 +11,7 @@ class SpacePlannerApp {
         this.viewport = new Viewport(canvas);
 
         // Initialize room (default dimensions)
-        this.room = new Room(400, 500, 250);
+        this.room = new Room(200, 200, 200);
 
         // Initialize object manager
         this.objectManager = new ObjectManager();
@@ -29,6 +29,7 @@ class SpacePlannerApp {
 
         // Initialize services
         this.statisticsService = new StatisticsService();
+        this.collisionService = new CollisionService();
 
         // Initialize object controller
         this.objectController = new ObjectController(
@@ -36,7 +37,9 @@ class SpacePlannerApp {
             this.roomController,
             this.viewport,
             this.eventBus,
-            this.objectView
+            this.objectView,
+            this.collisionService,
+            this.room
         );
 
         // Setup event listeners

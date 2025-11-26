@@ -2,12 +2,14 @@
  * ObjectController - Handles object interactions and placement logic
  */
 class ObjectController {
-    constructor(objectManager, roomController, viewport, eventBus, objectView) {
+    constructor(objectManager, roomController, viewport, eventBus, objectView, collisionService, room) {
         this.objectManager = objectManager;
         this.roomController = roomController;
         this.viewport = viewport;
         this.eventBus = eventBus;
         this.objectView = objectView;
+        this.collisionService = collisionService;
+        this.room = room;
 
         this.state = {
             mode: 'READY', // READY, CREATING, EDITING
@@ -91,15 +93,20 @@ class ObjectController {
         // Set object position
         this.state.pendingObject.move(roomPos.x, roomPos.y, 0);
 
-        // Check if object fits in room
-        const bounds = this.state.pendingObject.getBounds();
-        if (!this.roomController.checkObjectFits(
-            bounds.x,
-            bounds.y,
-            bounds.width,
-            bounds.height
-        )) {
-            alert('Object does not fit in the room at this position');
+        // Check for collisions
+        const allObjects = this.objectManager.getAllObjects();
+        const collisionResult = this.collisionService.canPlace(
+            this.state.pendingObject,
+            allObjects,
+            this.room
+        );
+
+        if (!collisionResult.canPlace) {
+            if (collisionResult.reason === 'outside_room') {
+                alert('Object cannot be placed outside the room boundaries');
+            } else if (collisionResult.reason === 'object_collision') {
+                alert('Object collides with another object. Disable collision to allow overlapping.');
+            }
             return;
         }
 
@@ -185,9 +192,32 @@ class ObjectController {
                 const newX = this.state.dragObjectStartPos.x + dx;
                 const newY = this.state.dragObjectStartPos.y + dy;
 
+                // Temporarily move to new position
                 selectedObj.move(newX, newY);
 
-                this.eventBus.emit('object:moved', { object: selectedObj });
+                // Check if position is valid
+                const allObjects = this.objectManager.getAllObjects();
+                const collisionResult = this.collisionService.canPlace(
+                    selectedObj,
+                    allObjects,
+                    this.room
+                );
+
+                if (!collisionResult.canPlace) {
+                    // Snap back to original position if invalid
+                    selectedObj.move(
+                        this.state.dragObjectStartPos.x,
+                        this.state.dragObjectStartPos.y
+                    );
+                } else {
+                    // Update drag start position for smooth dragging
+                    this.state.dragObjectStartPos.x = newX;
+                    this.state.dragObjectStartPos.y = newY;
+                    this.state.dragStartPos = roomPos;
+
+                    this.eventBus.emit('object:moved', { object: selectedObj });
+                }
+
                 this.eventBus.emit('render-requested');
             }
         }
@@ -199,6 +229,26 @@ class ObjectController {
      */
     handleMouseUp(e) {
         if (this.state.isDragging) {
+            // Final collision check
+            const selectedObj = this.objectManager.getSelectedObject();
+            if (selectedObj) {
+                const allObjects = this.objectManager.getAllObjects();
+                const collisionResult = this.collisionService.canPlace(
+                    selectedObj,
+                    allObjects,
+                    this.room
+                );
+
+                if (!collisionResult.canPlace) {
+                    // Snap back to original position
+                    selectedObj.move(
+                        this.state.dragObjectStartPos.x,
+                        this.state.dragObjectStartPos.y
+                    );
+                    this.eventBus.emit('render-requested');
+                }
+            }
+
             this.state.isDragging = false;
             this.state.dragStartPos = null;
             this.state.dragObjectStartPos = null;

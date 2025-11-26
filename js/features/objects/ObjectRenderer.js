@@ -115,7 +115,7 @@ class ObjectRenderer {
 
         // Draw selection outline
         ctx.save();
-        ctx.strokeStyle = '#4A90E2';
+        ctx.strokeStyle = '#ffffffff';
         ctx.lineWidth = 3;
         ctx.setLineDash([5, 5]);
 
