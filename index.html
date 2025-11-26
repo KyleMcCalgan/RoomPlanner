@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Planner</title>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/canvas.css">
+    <link rel="stylesheet" href="css/panel.css">
+    <link rel="stylesheet" href="css/modal.css">
+</head>
+<body>
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Canvas Area -->
+        <div class="canvas-container">
+            <canvas id="mainCanvas" width="800" height="600"></canvas>
+        </div>
+
+        <!-- Side Panel -->
+        <aside id="sidePanel" class="side-panel">
+            <!-- Control Section -->
+            <section class="panel-section">
+                <h2>Controls</h2>
+                <button id="roomSetupBtn" class="btn-block">Room Setup</button>
+                <button id="addObjectBtn" class="btn-block">Add Object</button>
+                <button id="addWindowBtn" class="btn-block" disabled>Add Window</button>
+                <button id="addDoorBtn" class="btn-block" disabled>Add Door</button>
+                <button id="exportBtn" class="btn-block">Export View</button>
+            </section>
+
+            <!-- Statistics Section -->
+            <section class="panel-section">
+                <h2>Statistics</h2>
+                <div class="stat-item">
+                    <span class="stat-label">Floor Space:</span>
+                    <span id="statFloorSpace" class="stat-value">0 m²</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Space Used:</span>
+                    <span id="statSpaceUsed" class="stat-value">0%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Objects:</span>
+                    <span id="statObjectCount" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Volume:</span>
+                    <span id="statTotalVolume" class="stat-value">0 m³</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Tallest Object:</span>
+                    <span id="statTallestObject" class="stat-value">0 m</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Remaining Height:</span>
+                    <span id="statRemainingHeight" class="stat-value">0 m</span>
+                </div>
+            </section>
+        </aside>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-left">
+            <button id="togglePanelBtn" class="btn-icon" title="Toggle Panel">☰</button>
+            <div class="view-selector">
+                <button class="view-btn active" data-view="TOP" title="Top View (1)">1</button>
+                <button class="view-btn" data-view="FRONT" title="Front View (2)" disabled>2</button>
+                <button class="view-btn" data-view="LEFT" title="Left View (3)" disabled>3</button>
+                <button class="view-btn" data-view="RIGHT" title="Right View (4)" disabled>4</button>
+            </div>
+        </div>
+        <div class="footer-right">
+            <span id="modeIndicator" class="mode-indicator">Ready</span>
+        </div>
+    </footer>
+
+    <!-- Room Setup Modal -->
+    <div id="roomModal" class="modal">
+        <div class="modal-content">
+            <h2>Room Setup</h2>
+            <form id="roomForm">
+                <div class="form-group">
+                    <label for="roomWidth">Width (m):</label>
+                    <input type="number" id="roomWidth" min="1" max="20" value="4" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label for="roomLength">Length (m):</label>
+                    <input type="number" id="roomLength" min="1" max="20" value="5" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label for="roomHeight">Height (m):</label>
+                    <input type="number" id="roomHeight" min="1" max="5" value="2.5" step="0.1" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelRoomBtn">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Object Creation Modal -->
+    <div id="objectModal" class="modal">
+        <div class="modal-content">
+            <h2>Create Object</h2>
+            <form id="objectForm">
+                <div class="form-group">
+                    <label for="objectName">Name:</label>
+                    <input type="text" id="objectName" placeholder="e.g., Sofa, Table" required>
+                </div>
+                <div class="form-group">
+                    <label for="objectWidth">Width (m):</label>
+                    <input type="number" id="objectWidth" min="0.01" max="10" value="1" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="objectLength">Length (m):</label>
+                    <input type="number" id="objectLength" min="0.01" max="10" value="1" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="objectHeight">Height (m):</label>
+                    <input type="number" id="objectHeight" min="0.01" max="3" value="0.8" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="objectColor">Color:</label>
+                    <input type="color" id="objectColor" value="#4A90E2">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelObjectBtn">Cancel</button>
+                    <button type="submit" class="btn-primary">Create & Place</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu">
+        <div class="context-menu-item" id="editObjectMenu">Edit Object</div>
+        <div class="context-menu-item" id="deleteObjectMenu">Delete Object</div>
+        <div class="context-menu-item" id="toggleCollisionMenu">Toggle Collision</div>
+    </div>
+
+    <!-- Load JavaScript Modules -->
+    <!-- Utilities -->
+    <script src="js/utils/helpers.js"></script>
+    <script src="js/utils/geometry.js"></script>
+    <script src="js/utils/drawing.js"></script>
+
+    <!-- Core -->
+    <script src="js/core/eventBus.js"></script>
+    <script src="js/core/viewport.js"></script>
+
+    <!-- Features -->
+    <script src="js/features/room/Room.js"></script>
+    <script src="js/features/room/RoomController.js"></script>
+    <script src="js/features/room/RoomRenderer.js"></script>
+    <script src="js/features/room/RoomView.js"></script>
+
+    <script src="js/features/objects/PlaceableObject.js"></script>
+    <script src="js/features/objects/ObjectManager.js"></script>
+    <script src="js/features/objects/ObjectController.js"></script>
+    <script src="js/features/objects/ObjectRenderer.js"></script>
+    <script src="js/features/objects/ObjectView.js"></script>
+
+    <!-- Services -->
+    <script src="js/services/StatisticsService.js"></script>
+
+    <!-- App Bootstrap -->
+    <script src="js/core/app.js"></script>
+</body>
+</html>

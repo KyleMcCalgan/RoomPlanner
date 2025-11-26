@@ -1,0 +1,31 @@
+/* Canvas and Viewport Styling */
+
+.canvas-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--bg-color);
+    padding: 1rem;
+    overflow: auto;
+}
+
+#mainCanvas {
+    background-color: var(--canvas-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 2px;
+    box-shadow: var(--shadow-lg);
+    cursor: crosshair;
+}
+
+#mainCanvas.dragging {
+    cursor: grabbing;
+}
+
+#mainCanvas.creating {
+    cursor: crosshair;
+}
+
+#mainCanvas.editing {
+    cursor: default;
+}
