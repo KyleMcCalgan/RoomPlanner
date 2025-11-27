@@ -642,15 +642,15 @@ class ObjectController {
     }
 
     /**
-     * Recalculate Z positions for all objects from bottom to top
-     * This ensures proper stacking when objects are deleted or moved
+     * Recalculate Z positions for all objects based on creation order
+     * Objects created first are always at the bottom of the stack
+     * This ensures consistent stacking hierarchy regardless of movement order
      */
     recalculateAllZPositions() {
         const allObjects = this.objectManager.getAllObjects();
         if (allObjects.length === 0) return;
 
-        // Sort objects by creation order (earliest first)
-        // This ensures objects placed first stay at the bottom
+        // Sort objects by creation order (earliest first = bottom of stack)
         const sortedObjects = [...allObjects].sort((a, b) => a.creationOrder - b.creationOrder);
 
         // Reset all Z positions to 0 first
@@ -659,9 +659,11 @@ class ObjectController {
         });
 
         // Recalculate Z for each object in creation order
-        // Each object can only stack on objects created before it
+        // Each object ONLY stacks on objects created BEFORE it
+        // This ensures earlier objects are always at the bottom
         sortedObjects.forEach((obj, index) => {
-            // Only consider objects created before this one for stacking
+            // Only consider objects created before this one
+            // This maintains creation order: earlier = lower in stack
             const objectsBelow = sortedObjects.slice(0, index);
             const newZ = this.collisionService.calculateStackingZ(obj, objectsBelow, this.room);
             obj.position.z = newZ;

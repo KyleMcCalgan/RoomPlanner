@@ -179,18 +179,21 @@ class CollisionService {
 
     /**
      * Calculate the appropriate Z position for stacking an object on others
-     * When an object overlaps with others that have collision disabled,
-     * it should stack on top of the highest one
+     * Objects can stack when EITHER object has collision disabled
+     * Creation order determines stacking: earlier objects are always below later objects
      * @param {PlaceableObject} object - Object to stack
-     * @param {Array<PlaceableObject>} allObjects - All other objects
+     * @param {Array<PlaceableObject>} allObjects - All other objects (should only be earlier objects)
      * @param {Room} room - The room (unused, kept for compatibility)
      * @returns {number} Calculated Z position (in cm)
      */
     calculateStackingZ(object, allObjects, room) {
         const overlapping = this.findOverlappingObjects(object, allObjects);
 
-        // Filter for objects with collision disabled (can stack on these)
-        const stackableObjects = overlapping.filter(obj => !obj.collisionEnabled);
+        // Filter for objects where EITHER this object OR the other has collision disabled
+        // This allows stacking when either party allows it
+        const stackableObjects = overlapping.filter(obj =>
+            !obj.collisionEnabled || !object.collisionEnabled
+        );
 
         if (stackableObjects.length === 0) {
             return 0; // No objects to stack on, place on ground
