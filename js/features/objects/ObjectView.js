@@ -36,6 +36,7 @@ class ObjectView {
         // Context menu
         this.contextMenu = document.getElementById('contextMenu');
         this.editMenuItem = document.getElementById('editObjectMenu');
+        this.duplicateMenuItem = document.getElementById('duplicateObjectMenu');
         this.deleteMenuItem = document.getElementById('deleteObjectMenu');
         this.toggleCollisionMenuItem = document.getElementById('toggleCollisionMenu');
 
@@ -94,6 +95,11 @@ class ObjectView {
         // Context menu items
         this.editMenuItem.addEventListener('click', () => {
             this.eventBus.emit('object:edit-requested');
+            this.hideContextMenu();
+        });
+
+        this.duplicateMenuItem.addEventListener('click', () => {
+            this.eventBus.emit('object:duplicate-requested');
             this.hideContextMenu();
         });
 
@@ -196,7 +202,7 @@ class ObjectView {
         const indicator = document.getElementById('modeIndicator');
         const modeTexts = {
             'READY': 'Ready',
-            'CREATING': 'Click to place object...',
+            'CREATING': 'Click to place object... (ESC to cancel)',
             'EDITING': 'Editing mode'
         };
         indicator.textContent = modeTexts[mode] || mode;

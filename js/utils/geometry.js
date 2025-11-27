@@ -66,10 +66,8 @@ function rotatePoint(px, py, cx, cy, angle) {
  * @returns {Object} Bounds {x, y, width, height}
  */
 function getRotatedBounds(x, y, width, height, rotation) {
-    // For 90-degree rotations, swap width and height
-    if (rotation === 90 || rotation === 270) {
-        return { x, y, width: height, height: width };
-    }
+    // Note: PlaceableObject.rotate() already swaps dimensions when rotating
+    // So we just return the bounds as-is, no additional swapping needed
     return { x, y, width, height };
 }
 

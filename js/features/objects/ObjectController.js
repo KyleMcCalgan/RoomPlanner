@@ -42,11 +42,12 @@ class ObjectController {
         // Keyboard events
         document.addEventListener('keydown', (e) => this.handleKeyDown(e));
 
-        // Object edit/delete/toggle collision
+        // Object edit/delete/toggle collision/duplicate
         this.eventBus.on('object:edit-requested', () => this.editSelectedObject());
         this.eventBus.on('object:update-requested', (data) => this.updateObject(data));
         this.eventBus.on('object:delete-requested', () => this.deleteSelectedObject());
         this.eventBus.on('object:toggle-collision-requested', () => this.toggleCollision());
+        this.eventBus.on('object:duplicate-requested', () => this.duplicateSelectedObject());
     }
 
     /**
@@ -124,9 +125,12 @@ class ObjectController {
 
         if (!collisionResult.canPlace) {
             if (collisionResult.reason === 'outside_room') {
-                alert('Object cannot be placed outside the room boundaries');
+                const cancel = confirm('Object cannot be placed outside the room boundaries.\n\nThe object may be too large for the room. Press OK to cancel placement, or Cancel to try another location.');
+                if (cancel) {
+                    this.cancelCreation();
+                }
             } else if (collisionResult.reason === 'object_collision') {
-                alert('Object collides with another object. Disable collision on the other object to stack.');
+                alert('Object collides with another object. Disable collision on the other object to stack, or press ESC to cancel placement.');
             }
             return;
         }
@@ -345,8 +349,15 @@ class ObjectController {
                         this.state.dragObjectStartPos.y,
                         this.state.dragObjectStartPos.z
                     );
-                    this.eventBus.emit('render-requested');
+                } else {
+                    // Object was successfully moved
+                    // Recalculate all Z positions to handle:
+                    // 1. Objects that were stacked on this one should fall
+                    // 2. This object should correctly stack on anything beneath it
+                    this.recalculateAllZPositions();
                 }
+
+                this.eventBus.emit('render-requested');
             }
 
             this.state.isDragging = false;
@@ -420,8 +431,43 @@ class ObjectController {
         const selectedObj = this.objectManager.getSelectedObject();
         if (!selectedObj) return;
 
+        // Store original state in case we need to rollback
+        const originalRotation = selectedObj.rotation;
+        const originalWidth = selectedObj.dimensions.width;
+        const originalLength = selectedObj.dimensions.length;
+
+        // Apply rotation (this swaps dimensions)
         const newRotation = (selectedObj.rotation + 90) % 360;
         selectedObj.rotate(newRotation);
+
+        // Check if the rotated object fits within room and doesn't collide
+        const allObjects = this.objectManager.getAllObjects();
+        const collisionResult = this.collisionService.canPlace(
+            selectedObj,
+            allObjects,
+            this.room
+        );
+
+        if (!collisionResult.canPlace) {
+            // Rollback rotation
+            selectedObj.rotation = originalRotation;
+            selectedObj.dimensions.width = originalWidth;
+            selectedObj.dimensions.length = originalLength;
+
+            // Show alert to user
+            if (collisionResult.reason === 'outside_room') {
+                alert('Cannot rotate: object would extend outside room boundaries');
+            } else if (collisionResult.reason === 'object_collision') {
+                alert('Cannot rotate: object would collide with another object');
+            }
+
+            this.eventBus.emit('render-requested');
+            return;
+        }
+
+        // Recalculate Z positions after rotation since the object's footprint changed
+        // This ensures proper stacking if rotation affects overlaps
+        this.recalculateAllZPositions();
 
         this.eventBus.emit('object:rotated', { object: selectedObj });
         this.eventBus.emit('render-requested');
@@ -434,7 +480,13 @@ class ObjectController {
         const selectedObj = this.objectManager.getSelectedObject();
         if (!selectedObj) return;
 
+        // Remove the object
         this.objectManager.removeObject(selectedObj.id);
+
+        // Recalculate Z positions for all remaining objects
+        // This ensures objects that were stacked above the deleted object fall to the correct height
+        // Important: We need to recalculate from bottom to top to ensure correct stacking
+        this.recalculateAllZPositions();
 
         this.state.mode = 'READY';
         this.objectView.updateModeIndicator('READY');
@@ -452,7 +504,42 @@ class ObjectController {
 
         selectedObj.toggleCollision();
 
+        // Recalculate Z positions after toggling collision
+        // Disabling collision allows stacking, enabling it prevents it
+        this.recalculateAllZPositions();
+
         this.eventBus.emit('object:collision-toggled', { object: selectedObj });
+        this.eventBus.emit('render-requested');
+    }
+
+    /**
+     * Duplicate selected object
+     */
+    duplicateSelectedObject() {
+        const selectedObj = this.objectManager.getSelectedObject();
+        if (!selectedObj) return;
+
+        // Create a duplicate with the same properties
+        const duplicate = new PlaceableObject(
+            selectedObj.name + ' (copy)',
+            selectedObj.dimensions.width,
+            selectedObj.dimensions.length,
+            selectedObj.dimensions.height,
+            selectedObj.color
+        );
+
+        // Copy collision setting
+        duplicate.collisionEnabled = selectedObj.collisionEnabled;
+
+        // Enter CREATING mode with the duplicate
+        this.state.pendingObject = duplicate;
+        this.state.mode = 'CREATING';
+        this.objectView.updateModeIndicator('CREATING');
+
+        // Deselect the original object
+        this.objectManager.deselectObject();
+
+        // Trigger render to show preview
         this.eventBus.emit('render-requested');
     }
 
@@ -517,6 +604,10 @@ class ObjectController {
             return;
         }
 
+        // Recalculate Z positions after update since dimensions/position/collision may have changed
+        // This ensures proper stacking after edits
+        this.recalculateAllZPositions();
+
         // Emit update event
         this.eventBus.emit('object:updated', { object: obj });
         this.eventBus.emit('render-requested');
@@ -546,5 +637,30 @@ class ObjectController {
      */
     getMode() {
         return this.state.mode;
+    }
+
+    /**
+     * Recalculate Z positions for all objects from bottom to top
+     * This ensures proper stacking when objects are deleted or moved
+     */
+    recalculateAllZPositions() {
+        const allObjects = this.objectManager.getAllObjects();
+        if (allObjects.length === 0) return;
+
+        // Sort objects by current Z position (bottom to top)
+        const sortedObjects = [...allObjects].sort((a, b) => a.position.z - b.position.z);
+
+        // Recalculate Z for each object in order
+        sortedObjects.forEach(obj => {
+            const newZ = this.collisionService.calculateStackingZ(obj, allObjects);
+            obj.position.z = newZ;
+        });
+
+        // Do a second pass to catch any objects that might need adjustment
+        // This handles cases where multiple objects were stacked and need to re-settle
+        sortedObjects.forEach(obj => {
+            const newZ = this.collisionService.calculateStackingZ(obj, allObjects);
+            obj.position.z = newZ;
+        });
     }
 }
