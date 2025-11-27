@@ -110,7 +110,8 @@ class ObjectController {
         // Calculate appropriate Z position for stacking
         const stackingZ = this.collisionService.calculateStackingZ(
             this.state.pendingObject,
-            allObjects
+            allObjects,
+            this.room
         );
 
         // Update Z position
@@ -125,7 +126,7 @@ class ObjectController {
 
         if (!collisionResult.canPlace) {
             if (collisionResult.reason === 'outside_room') {
-                const cancel = confirm('Object cannot be placed outside the room boundaries.\n\nThe object may be too large for the room. Press OK to cancel placement, or Cancel to try another location.');
+                const cancel = confirm('Object cannot be placed outside the room boundaries.\n\nThis could be because:\n- The object extends beyond the room walls\n- Stacking would exceed the room ceiling height\n- The object is too large for the room\n\nPress OK to cancel placement, or Cancel to try another location.');
                 if (cancel) {
                     this.cancelCreation();
                 }
@@ -291,7 +292,8 @@ class ObjectController {
                 const allObjects = this.objectManager.getAllObjects();
                 const stackingZ = this.collisionService.calculateStackingZ(
                     selectedObj,
-                    allObjects
+                    allObjects,
+                    this.room
                 );
 
                 // Update Z position
@@ -647,19 +649,21 @@ class ObjectController {
         const allObjects = this.objectManager.getAllObjects();
         if (allObjects.length === 0) return;
 
-        // Sort objects by current Z position (bottom to top)
-        const sortedObjects = [...allObjects].sort((a, b) => a.position.z - b.position.z);
+        // Sort objects by creation order (earliest first)
+        // This ensures objects placed first stay at the bottom
+        const sortedObjects = [...allObjects].sort((a, b) => a.creationOrder - b.creationOrder);
 
-        // Recalculate Z for each object in order
+        // Reset all Z positions to 0 first
         sortedObjects.forEach(obj => {
-            const newZ = this.collisionService.calculateStackingZ(obj, allObjects);
-            obj.position.z = newZ;
+            obj.position.z = 0;
         });
 
-        // Do a second pass to catch any objects that might need adjustment
-        // This handles cases where multiple objects were stacked and need to re-settle
-        sortedObjects.forEach(obj => {
-            const newZ = this.collisionService.calculateStackingZ(obj, allObjects);
+        // Recalculate Z for each object in creation order
+        // Each object can only stack on objects created before it
+        sortedObjects.forEach((obj, index) => {
+            // Only consider objects created before this one for stacking
+            const objectsBelow = sortedObjects.slice(0, index);
+            const newZ = this.collisionService.calculateStackingZ(obj, objectsBelow, this.room);
             obj.position.z = newZ;
         });
     }

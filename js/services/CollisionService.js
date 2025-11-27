@@ -11,7 +11,7 @@ class CollisionService {
     checkBoundaryCollision(object, room) {
         const bounds = object.getBounds();
 
-        // Check if any part of the object is outside room boundaries
+        // Check if any part of the object is outside room boundaries (X, Y)
         if (bounds.x < 0 || bounds.y < 0) {
             return true; // Collision with left or top boundary
         }
@@ -19,6 +19,15 @@ class CollisionService {
         if (bounds.x + bounds.width > room.dimensions.width ||
             bounds.y + bounds.height > room.dimensions.length) {
             return true; // Collision with right or bottom boundary
+        }
+
+        // Check if object is outside room boundaries (Z axis - height)
+        if (object.position.z < 0) {
+            return true; // Below ground
+        }
+
+        if (object.position.z + object.dimensions.height > room.dimensions.height) {
+            return true; // Above ceiling
         }
 
         return false; // No collision
@@ -174,9 +183,10 @@ class CollisionService {
      * it should stack on top of the highest one
      * @param {PlaceableObject} object - Object to stack
      * @param {Array<PlaceableObject>} allObjects - All other objects
+     * @param {Room} room - The room (unused, kept for compatibility)
      * @returns {number} Calculated Z position (in cm)
      */
-    calculateStackingZ(object, allObjects) {
+    calculateStackingZ(object, allObjects, room) {
         const overlapping = this.findOverlappingObjects(object, allObjects);
 
         // Filter for objects with collision disabled (can stack on these)
@@ -195,6 +205,8 @@ class CollisionService {
             }
         }
 
+        // Return the calculated Z position
+        // The boundary collision check will reject if this exceeds room height
         return maxTopZ;
     }
 }
