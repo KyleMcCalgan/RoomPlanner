@@ -58,6 +58,33 @@
                 </div>
             </section>
         </aside>
+
+        <!-- Right Panel - Object List -->
+        <aside id="rightPanel" class="right-panel">
+            <!-- Objects Section -->
+            <section class="panel-section">
+                <h2>Objects</h2>
+                <div id="objectList" class="object-list">
+                    <p class="empty-message">No objects yet</p>
+                </div>
+            </section>
+
+            <!-- Doors Section -->
+            <section class="panel-section">
+                <h2>Doors</h2>
+                <div id="doorList" class="object-list">
+                    <p class="empty-message">No doors yet</p>
+                </div>
+            </section>
+
+            <!-- Windows Section -->
+            <section class="panel-section">
+                <h2>Windows</h2>
+                <div id="windowList" class="object-list">
+                    <p class="empty-message">No windows yet</p>
+                </div>
+            </section>
+        </aside>
     </div>
 
     <!-- Footer -->
@@ -74,6 +101,8 @@
         <div class="footer-right">
             <span id="viewIndicator" class="view-indicator">Top View</span>
             <span id="modeIndicator" class="mode-indicator">Ready</span>
+            <button id="helpBtn" class="btn-icon" title="Keyboard Shortcuts (?)">?</button>
+            <button id="toggleRightPanelBtn" class="btn-icon" title="Toggle Object List">⋮</button>
         </div>
     </footer>
 
@@ -209,6 +238,114 @@
         <div class="context-menu-item" id="toggleCollisionMenu">Toggle Collision</div>
     </div>
 
+    <!-- List Item Context Menu -->
+    <div id="listContextMenu" class="context-menu">
+        <div class="context-menu-item" id="listEditObjectMenu">Edit Object</div>
+        <div class="context-menu-item" id="listDuplicateObjectMenu">Duplicate Object</div>
+        <div class="context-menu-item" id="listToggleVisibilityMenu">Toggle Visibility</div>
+        <div class="context-menu-item" id="listToggleCollisionMenu">Toggle Collision</div>
+        <div class="context-menu-item" id="listDeleteObjectMenu">Delete Object</div>
+    </div>
+
+    <!-- Batch Operations Context Menu -->
+    <div id="batchContextMenu" class="context-menu">
+        <div class="context-menu-item" id="batchToggleVisibilityMenu">Toggle Visibility</div>
+        <div class="context-menu-item" id="batchToggleCollisionMenu">Toggle Collision</div>
+        <div class="context-menu-item" id="batchDeleteMenu">Delete Selected</div>
+        <div class="context-menu-item" id="batchDeselectMenu">Deselect All</div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content modal-help">
+            <h2>Keyboard Shortcuts</h2>
+            <div class="shortcuts-container">
+                <div class="shortcuts-section">
+                    <h3>Views</h3>
+                    <div class="shortcut-item">
+                        <kbd>1</kbd>
+                        <span>Top View</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>2</kbd>
+                        <span>Front View</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>3</kbd>
+                        <span>Left View</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>4</kbd>
+                        <span>Right View</span>
+                    </div>
+                </div>
+
+                <div class="shortcuts-section">
+                    <h3>Object Actions</h3>
+                    <div class="shortcut-item">
+                        <kbd>R</kbd>
+                        <span>Rotate Selected</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>D</kbd>
+                        <span>Duplicate Selected</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>H</kbd>
+                        <span>Hide/Show Selected</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>C</kbd>
+                        <span>Toggle Collision</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Delete</kbd>
+                        <span>Delete Selected</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Escape</kbd>
+                        <span>Deselect</span>
+                    </div>
+                </div>
+
+                <div class="shortcuts-section">
+                    <h3>Selection</h3>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl</kbd> + <kbd>Click</kbd>
+                        <span>Multi-Select (List or Canvas)</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl</kbd> + <kbd>A</kbd>
+                        <span>Select All</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>E</kbd>
+                        <span>Deselect All</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Drag</kbd>
+                        <span>Move Selected Objects</span>
+                    </div>
+                </div>
+
+                <div class="shortcuts-section">
+                    <h3>Interface</h3>
+                    <div class="shortcut-item">
+                        <kbd>?</kbd>
+                        <span>Show This Help</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl</kbd> + <kbd>\</kbd>
+                        <span>Toggle Left Panel</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-primary" id="closeHelpBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Load JavaScript Modules -->
     <!-- Utilities -->
     <script src="js/utils/helpers.js"></script>
@@ -230,6 +367,7 @@
     <script src="js/features/objects/ObjectController.js"></script>
     <script src="js/features/objects/ObjectRenderer.js"></script>
     <script src="js/features/objects/ObjectView.js"></script>
+    <script src="js/features/objects/ObjectListView.js"></script>
 
     <!-- Views -->
     <script src="js/features/views/ViewManager.js"></script>

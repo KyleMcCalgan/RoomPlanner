@@ -17,7 +17,8 @@ class ObjectController {
             pendingObject: null,
             isDragging: false,
             dragStartPos: null,
-            dragObjectStartPos: null
+            dragObjectStartPos: null,
+            dragObjectsStartPositions: [] // For multi-object dragging
         };
 
         this.setupEventListeners();
@@ -43,11 +44,31 @@ class ObjectController {
         document.addEventListener('keydown', (e) => this.handleKeyDown(e));
 
         // Object edit/delete/toggle collision/duplicate
-        this.eventBus.on('object:edit-requested', () => this.editSelectedObject());
+        this.eventBus.on('object:edit-requested', (data) => {
+            if (data && data.objectId) {
+                this.objectManager.selectObject(data.objectId);
+            }
+            this.editSelectedObject();
+        });
         this.eventBus.on('object:update-requested', (data) => this.updateObject(data));
-        this.eventBus.on('object:delete-requested', () => this.deleteSelectedObject());
-        this.eventBus.on('object:toggle-collision-requested', () => this.toggleCollision());
-        this.eventBus.on('object:duplicate-requested', () => this.duplicateSelectedObject());
+        this.eventBus.on('object:delete-requested', (data) => {
+            if (data && data.objectId) {
+                this.objectManager.selectObject(data.objectId);
+            }
+            this.deleteSelectedObject();
+        });
+        this.eventBus.on('object:toggle-collision-requested', (data) => {
+            if (data && data.objectId) {
+                this.objectManager.selectObject(data.objectId);
+            }
+            this.toggleCollision();
+        });
+        this.eventBus.on('object:duplicate-requested', (data) => {
+            if (data && data.objectId) {
+                this.objectManager.selectObject(data.objectId);
+            }
+            this.duplicateSelectedObject();
+        });
     }
 
     /**
@@ -172,16 +193,27 @@ class ObjectController {
         }
 
         if (obj) {
-            this.objectManager.selectObject(obj.id);
+            // Check if Ctrl/Cmd is held for multi-select
+            if (e.ctrlKey || e.metaKey) {
+                // Toggle selection
+                this.objectManager.toggleObjectSelection(obj.id);
+            } else {
+                // Single select (clears previous selection)
+                this.objectManager.selectObject(obj.id);
+            }
             this.state.mode = 'EDITING';
             this.eventBus.emit('object:selected', { object: obj });
         } else {
-            this.objectManager.deselectObject();
-            this.state.mode = 'READY';
-            this.eventBus.emit('object:deselected');
+            // Clicked on empty space
+            if (!e.ctrlKey && !e.metaKey) {
+                // Deselect all if not holding Ctrl
+                this.objectManager.deselectObject();
+                this.state.mode = 'READY';
+                this.eventBus.emit('object:deselected');
+            }
         }
 
-        this.objectView.updateModeIndicator(this.state.mode);
+        this.objectView.updateModeIndicator(this.state.mode, this.objectManager.getSelectedCount());
         this.eventBus.emit('render-requested');
     }
 
@@ -246,8 +278,8 @@ class ObjectController {
     handleMouseDown(e) {
         if (this.state.mode !== 'EDITING') return;
 
-        const selectedObj = this.objectManager.getSelectedObject();
-        if (!selectedObj) return;
+        const selectedObjects = this.objectManager.getSelectedObjects();
+        if (selectedObjects.length === 0) return;
 
         // Only allow dragging in top view
         const currentView = this.viewManager.getCurrentView();
@@ -256,11 +288,23 @@ class ObjectController {
         const mousePos = this.viewport.getMousePos(e);
         const roomPos = this.viewport.toRoomCoords(mousePos.x, mousePos.y);
 
-        // Check if clicking on selected object
-        if (selectedObj.isAt(roomPos.x, roomPos.y)) {
+        // Check if clicking on any selected object
+        const clickedOnSelected = selectedObjects.some(obj => obj.isAt(roomPos.x, roomPos.y));
+
+        if (clickedOnSelected) {
             this.state.isDragging = true;
             this.state.dragStartPos = roomPos;
-            this.state.dragObjectStartPos = { ...selectedObj.position };
+
+            // Store initial positions of all selected objects
+            this.state.dragObjectsStartPositions = selectedObjects.map(obj => ({
+                id: obj.id,
+                position: { ...obj.position }
+            }));
+
+            // Keep legacy for compatibility
+            if (selectedObjects.length > 0) {
+                this.state.dragObjectStartPos = { ...selectedObjects[0].position };
+            }
         }
     }
 
@@ -280,47 +324,74 @@ class ObjectController {
             const dx = roomPos.x - this.state.dragStartPos.x;
             const dy = roomPos.y - this.state.dragStartPos.y;
 
-            const selectedObj = this.objectManager.getSelectedObject();
-            if (selectedObj) {
-                const newX = this.state.dragObjectStartPos.x + dx;
-                const newY = this.state.dragObjectStartPos.y + dy;
-
-                // Temporarily move to new X,Y position
-                selectedObj.move(newX, newY, selectedObj.position.z);
-
-                // Recalculate Z position based on what's underneath
+            const selectedObjects = this.objectManager.getSelectedObjects();
+            if (selectedObjects.length > 0) {
+                let allValid = true;
                 const allObjects = this.objectManager.getAllObjects();
-                const stackingZ = this.collisionService.calculateStackingZ(
-                    selectedObj,
-                    allObjects,
-                    this.room
-                );
 
-                // Update Z position
-                selectedObj.position.z = stackingZ;
+                // Try to move all selected objects
+                const newPositions = [];
+                for (let i = 0; i < selectedObjects.length; i++) {
+                    const obj = selectedObjects[i];
+                    const startPos = this.state.dragObjectsStartPositions[i].position;
 
-                // Check if position is valid
-                const collisionResult = this.collisionService.canPlace(
-                    selectedObj,
-                    allObjects,
-                    this.room
-                );
+                    const newX = startPos.x + dx;
+                    const newY = startPos.y + dy;
 
-                if (!collisionResult.canPlace) {
-                    // Snap back to original position if invalid
-                    selectedObj.move(
-                        this.state.dragObjectStartPos.x,
-                        this.state.dragObjectStartPos.y,
-                        this.state.dragObjectStartPos.z
+                    // Temporarily move to new X,Y position
+                    obj.move(newX, newY, obj.position.z);
+
+                    // Recalculate Z position based on what's underneath
+                    const stackingZ = this.collisionService.calculateStackingZ(
+                        obj,
+                        allObjects,
+                        this.room
                     );
+
+                    // Update Z position
+                    obj.position.z = stackingZ;
+
+                    // Check if position is valid
+                    const collisionResult = this.collisionService.canPlace(
+                        obj,
+                        allObjects,
+                        this.room
+                    );
+
+                    newPositions.push({
+                        obj,
+                        x: newX,
+                        y: newY,
+                        z: stackingZ,
+                        valid: collisionResult.canPlace
+                    });
+
+                    if (!collisionResult.canPlace) {
+                        allValid = false;
+                    }
+                }
+
+                if (!allValid) {
+                    // Snap all back to original positions if any is invalid
+                    for (let i = 0; i < selectedObjects.length; i++) {
+                        const obj = selectedObjects[i];
+                        const startPos = this.state.dragObjectsStartPositions[i].position;
+                        obj.move(startPos.x, startPos.y, startPos.z);
+                    }
                 } else {
-                    // Update drag start position for smooth dragging
-                    this.state.dragObjectStartPos.x = newX;
-                    this.state.dragObjectStartPos.y = newY;
-                    this.state.dragObjectStartPos.z = stackingZ;
+                    // Update drag start positions for smooth dragging
+                    this.state.dragObjectsStartPositions = selectedObjects.map((obj, i) => ({
+                        id: obj.id,
+                        position: { x: newPositions[i].x, y: newPositions[i].y, z: newPositions[i].z }
+                    }));
                     this.state.dragStartPos = roomPos;
 
-                    this.eventBus.emit('object:moved', { object: selectedObj });
+                    // Update legacy
+                    if (selectedObjects.length > 0) {
+                        this.state.dragObjectStartPos = { ...newPositions[0] };
+                    }
+
+                    this.eventBus.emit('object:moved', { objects: selectedObjects });
                 }
 
                 this.eventBus.emit('render-requested');
@@ -334,28 +405,38 @@ class ObjectController {
      */
     handleMouseUp(e) {
         if (this.state.isDragging) {
-            // Final collision check
-            const selectedObj = this.objectManager.getSelectedObject();
-            if (selectedObj) {
+            // Final collision check for all selected objects
+            const selectedObjects = this.objectManager.getSelectedObjects();
+            if (selectedObjects.length > 0) {
                 const allObjects = this.objectManager.getAllObjects();
-                const collisionResult = this.collisionService.canPlace(
-                    selectedObj,
-                    allObjects,
-                    this.room
-                );
+                let allValid = true;
 
-                if (!collisionResult.canPlace) {
-                    // Snap back to original position
-                    selectedObj.move(
-                        this.state.dragObjectStartPos.x,
-                        this.state.dragObjectStartPos.y,
-                        this.state.dragObjectStartPos.z
+                // Check if all objects are in valid positions
+                for (const obj of selectedObjects) {
+                    const collisionResult = this.collisionService.canPlace(
+                        obj,
+                        allObjects,
+                        this.room
                     );
+
+                    if (!collisionResult.canPlace) {
+                        allValid = false;
+                        break;
+                    }
+                }
+
+                if (!allValid) {
+                    // Snap all back to original positions
+                    for (let i = 0; i < selectedObjects.length; i++) {
+                        const obj = selectedObjects[i];
+                        const startPos = this.state.dragObjectsStartPositions[i].position;
+                        obj.move(startPos.x, startPos.y, startPos.z);
+                    }
                 } else {
-                    // Object was successfully moved
+                    // Objects were successfully moved
                     // Recalculate all Z positions to handle:
-                    // 1. Objects that were stacked on this one should fall
-                    // 2. This object should correctly stack on anything beneath it
+                    // 1. Objects that were stacked on moved ones should fall
+                    // 2. Moved objects should correctly stack on anything beneath them
                     this.recalculateAllZPositions();
                 }
 
@@ -365,6 +446,7 @@ class ObjectController {
             this.state.isDragging = false;
             this.state.dragStartPos = null;
             this.state.dragObjectStartPos = null;
+            this.state.dragObjectsStartPositions = [];
         }
     }
 

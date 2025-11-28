@@ -225,8 +225,9 @@ button {
     border: 1px solid var(--border-color);
     border-radius: 4px;
     box-shadow: var(--shadow-lg);
-    z-index: 1000;
+    z-index: 2000;
     min-width: 180px;
+    pointer-events: auto;
 }
 
 .context-menu.active {
@@ -240,6 +241,8 @@ button {
     font-size: 0.9rem;
     color: var(--text-primary);
     border-bottom: 1px solid var(--border-color);
+    pointer-events: auto;
+    user-select: none;
 }
 
 .context-menu-item:last-child {

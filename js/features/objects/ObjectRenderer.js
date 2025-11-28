@@ -21,11 +21,13 @@ class ObjectRenderer {
             this.renderSideView(ctx, view);
         }
 
-        // Highlight selected object
-        const selectedObj = this.objectManager.getSelectedObject();
-        if (selectedObj) {
-            this.drawSelection(ctx, selectedObj, view);
-        }
+        // Highlight selected objects
+        const selectedObjects = this.objectManager.getSelectedObjects();
+        selectedObjects.forEach(obj => {
+            if (obj.visible) {
+                this.drawSelection(ctx, obj, view);
+            }
+        });
     }
 
     /**
@@ -34,7 +36,7 @@ class ObjectRenderer {
      */
     renderTopView(ctx) {
         const objects = this.objectManager.getObjectsByCreationOrder();
-        objects.forEach(obj => this.drawObjectTopView(ctx, obj));
+        objects.filter(obj => obj.visible).forEach(obj => this.drawObjectTopView(ctx, obj));
     }
 
     /**
@@ -43,7 +45,7 @@ class ObjectRenderer {
      * @param {string} view - View type
      */
     renderSideView(ctx, view) {
-        const objects = this.objectManager.getAllObjects();
+        const objects = this.objectManager.getAllObjects().filter(obj => obj.visible);
 
         // Sort by depth (back to front) so front objects occlude back ones
         const sortedObjects = this.sortObjectsByDepth(objects, view);

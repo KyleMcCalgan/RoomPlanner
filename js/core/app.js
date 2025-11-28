@@ -22,6 +22,7 @@ class SpacePlannerApp {
         // Initialize views
         this.roomView = new RoomView(this.roomController, this.eventBus);
         this.objectView = new ObjectView(this.eventBus, this.objectManager);
+        this.objectListView = new ObjectListView(this.eventBus, this.objectManager);
 
         // Initialize renderers
         this.roomRenderer = new RoomRenderer(this.room, this.viewport);
@@ -87,9 +88,12 @@ class SpacePlannerApp {
             this.render();
         });
         this.eventBus.on('object:selected', () => {
+            const count = this.objectManager.getSelectedCount();
+            this.objectView.updateModeIndicator(count > 0 ? 'EDITING' : 'READY', count);
             this.render();
         });
         this.eventBus.on('object:deselected', () => {
+            this.objectView.updateModeIndicator('READY', 0);
             this.render();
         });
         this.eventBus.on('render-requested', (data) => {
@@ -98,18 +102,98 @@ class SpacePlannerApp {
         this.eventBus.on('view:changed', () => {
             this.render();
         });
+
+        // List view events
+        this.eventBus.on('list:object-clicked', (data) => {
+            // Select the object when clicked from list
+            this.objectManager.selectObject(data.objectId);
+            this.eventBus.emit('object:selected', { objectId: data.objectId });
+        });
+
+        this.eventBus.on('list:reorder-objects', (data) => {
+            // Reorder objects and update stacking
+            this.objectManager.reorderObjects(data.draggedObjectId, data.targetObjectId);
+            this.objectController.recalculateAllZPositions();
+            this.eventBus.emit('object:updated'); // Trigger list refresh
+            this.render();
+            this.updateStatistics();
+        });
+
+        // Visibility toggle events
+        this.eventBus.on('object:toggle-visibility', (data) => {
+            const obj = this.objectManager.getObject(data.objectId);
+            if (obj) {
+                obj.toggleVisibility();
+                this.eventBus.emit('object:updated');
+                this.render();
+            }
+        });
+
+        // Batch operation events
+        this.eventBus.on('batch:toggle-visibility', () => {
+            const selectedObjects = this.objectManager.getSelectedObjects();
+            selectedObjects.forEach(obj => obj.toggleVisibility());
+            this.eventBus.emit('object:updated');
+            this.render();
+        });
+
+        this.eventBus.on('batch:toggle-collision', () => {
+            const selectedObjects = this.objectManager.getSelectedObjects();
+            selectedObjects.forEach(obj => obj.toggleCollision());
+            this.objectController.recalculateAllZPositions();
+            this.eventBus.emit('object:updated');
+            this.render();
+        });
+
+        this.eventBus.on('batch:delete', () => {
+            const selectedIds = [...this.objectManager.selectedObjectIds]; // Copy array
+            selectedIds.forEach(id => this.objectManager.removeObject(id));
+            this.objectManager.deselectAll();
+            this.objectController.recalculateAllZPositions();
+            this.eventBus.emit('object:deleted');
+            this.render();
+            this.updateStatistics();
+        });
     }
 
     /**
      * Set up UI interactions
      */
     setupUI() {
-        // Toggle side panel
+        // Toggle left side panel
         const toggleBtn = document.getElementById('togglePanelBtn');
         const sidePanel = document.getElementById('sidePanel');
 
         toggleBtn.addEventListener('click', () => {
             sidePanel.classList.toggle('collapsed');
+        });
+
+        // Toggle right panel
+        const toggleRightBtn = document.getElementById('toggleRightPanelBtn');
+        const rightPanel = document.getElementById('rightPanel');
+
+        toggleRightBtn.addEventListener('click', () => {
+            rightPanel.classList.toggle('collapsed');
+        });
+
+        // Help button
+        const helpBtn = document.getElementById('helpBtn');
+        const helpModal = document.getElementById('helpModal');
+        const closeHelpBtn = document.getElementById('closeHelpBtn');
+
+        helpBtn.addEventListener('click', () => {
+            helpModal.classList.add('active');
+        });
+
+        closeHelpBtn.addEventListener('click', () => {
+            helpModal.classList.remove('active');
+        });
+
+        // Close help modal on background click
+        helpModal.addEventListener('click', (e) => {
+            if (e.target === helpModal) {
+                helpModal.classList.remove('active');
+            }
         });
 
         // Export button (placeholder for now)
@@ -118,8 +202,86 @@ class SpacePlannerApp {
             alert('Export functionality will be implemented in Phase 9');
         });
 
+        // Keyboard shortcuts
+        this.setupKeyboardShortcuts();
+
         // Update initial statistics
         this.updateStatistics();
+    }
+
+    /**
+     * Set up keyboard shortcuts
+     */
+    setupKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Ignore if typing in an input field
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                return;
+            }
+
+            // Help modal
+            if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                document.getElementById('helpModal').classList.add('active');
+                return;
+            }
+
+            // Escape closes help modal and context menus
+            if (e.key === 'Escape') {
+                document.getElementById('helpModal').classList.remove('active');
+                document.querySelectorAll('.context-menu').forEach(menu => {
+                    menu.classList.remove('active');
+                });
+                return;
+            }
+
+            const selectedObjects = this.objectManager.getSelectedObjects();
+            if (selectedObjects.length === 0) return;
+
+            // D - Duplicate (only if not using Ctrl)
+            if ((e.key === 'd' || e.key === 'D') && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                if (selectedObjects.length === 1) {
+                    this.eventBus.emit('object:duplicate-requested', { objectId: selectedObjects[0].id });
+                }
+                return;
+            }
+
+            // H - Hide/Show
+            if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                selectedObjects.forEach(obj => obj.toggleVisibility());
+                this.eventBus.emit('object:updated');
+                this.render();
+                return;
+            }
+
+            // C - Toggle Collision
+            if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                selectedObjects.forEach(obj => obj.toggleCollision());
+                this.objectController.recalculateAllZPositions();
+                this.eventBus.emit('object:updated');
+                this.render();
+                return;
+            }
+
+            // A - Select All (works with or without Ctrl)
+            if ((e.key === 'a' || e.key === 'A') && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                this.objectManager.selectAll();
+                this.eventBus.emit('object:selected');
+                return;
+            }
+
+            // E - Deselect All
+            if ((e.key === 'e' || e.key === 'E') && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                this.objectManager.deselectAll();
+                this.eventBus.emit('object:deselected');
+                return;
+            }
+        });
     }
 
     /**

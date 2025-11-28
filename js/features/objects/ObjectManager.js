@@ -4,7 +4,8 @@
 class ObjectManager {
     constructor() {
         this.objects = [];
-        this.selectedObjectId = null;
+        this.selectedObjectIds = []; // Support multiple selection
+        this.selectedObjectId = null; // Deprecated but kept for backwards compatibility
         this.creationCounter = 0;
     }
 
@@ -60,27 +61,96 @@ class ObjectManager {
     }
 
     /**
-     * Select an object
+     * Select an object (single selection, clears previous)
      * @param {string} id - Object ID
      */
     selectObject(id) {
-        this.selectedObjectId = id;
+        this.selectedObjectIds = [id];
+        this.selectedObjectId = id; // Maintain compatibility
     }
 
     /**
-     * Deselect current object
+     * Toggle selection of an object (for multi-select)
+     * @param {string} id - Object ID
+     */
+    toggleObjectSelection(id) {
+        const index = this.selectedObjectIds.indexOf(id);
+        if (index > -1) {
+            this.selectedObjectIds.splice(index, 1);
+        } else {
+            this.selectedObjectIds.push(id);
+        }
+        // Update legacy property
+        this.selectedObjectId = this.selectedObjectIds.length > 0 ? this.selectedObjectIds[0] : null;
+    }
+
+    /**
+     * Add object to selection
+     * @param {string} id - Object ID
+     */
+    addToSelection(id) {
+        if (!this.selectedObjectIds.includes(id)) {
+            this.selectedObjectIds.push(id);
+            this.selectedObjectId = id; // Update legacy property to last selected
+        }
+    }
+
+    /**
+     * Deselect current object(s)
      */
     deselectObject() {
+        this.selectedObjectIds = [];
         this.selectedObjectId = null;
     }
 
     /**
-     * Get selected object
+     * Deselect all objects
+     */
+    deselectAll() {
+        this.selectedObjectIds = [];
+        this.selectedObjectId = null;
+    }
+
+    /**
+     * Select all objects
+     */
+    selectAll() {
+        this.selectedObjectIds = this.objects.map(obj => obj.id);
+        this.selectedObjectId = this.selectedObjectIds.length > 0 ? this.selectedObjectIds[0] : null;
+    }
+
+    /**
+     * Get selected object (first one if multiple)
      * @returns {PlaceableObject|null} Selected object or null
      */
     getSelectedObject() {
         if (!this.selectedObjectId) return null;
         return this.getObject(this.selectedObjectId);
+    }
+
+    /**
+     * Get all selected objects
+     * @returns {Array<PlaceableObject>} Array of selected objects
+     */
+    getSelectedObjects() {
+        return this.selectedObjectIds.map(id => this.getObject(id)).filter(obj => obj !== null);
+    }
+
+    /**
+     * Check if an object is selected
+     * @param {string} id - Object ID
+     * @returns {boolean} True if selected
+     */
+    isSelected(id) {
+        return this.selectedObjectIds.includes(id);
+    }
+
+    /**
+     * Get count of selected objects
+     * @returns {number} Count of selected objects
+     */
+    getSelectedCount() {
+        return this.selectedObjectIds.length;
     }
 
     /**
@@ -110,5 +180,47 @@ class ObjectManager {
         this.objects = [];
         this.selectedObjectId = null;
         this.creationCounter = 0;
+    }
+
+    /**
+     * Reorder objects by updating creation order
+     * @param {string} draggedObjectId - ID of the dragged object
+     * @param {string} targetObjectId - ID of the target position object
+     */
+    reorderObjects(draggedObjectId, targetObjectId) {
+        const draggedObj = this.getObject(draggedObjectId);
+        const targetObj = this.getObject(targetObjectId);
+
+        if (!draggedObj || !targetObj || draggedObj === targetObj) {
+            return;
+        }
+
+        // Get all objects sorted by creation order
+        const sortedObjects = this.getObjectsByCreationOrder();
+
+        // Find indices
+        const draggedIndex = sortedObjects.findIndex(obj => obj.id === draggedObjectId);
+        const targetIndex = sortedObjects.findIndex(obj => obj.id === targetObjectId);
+
+        if (draggedIndex === -1 || targetIndex === -1) {
+            return;
+        }
+
+        // Remove dragged object from array
+        const [removed] = sortedObjects.splice(draggedIndex, 1);
+
+        // Insert at new position
+        // If dragging down, insert before target
+        // If dragging up, insert after target
+        const insertIndex = draggedIndex < targetIndex ? targetIndex : targetIndex;
+        sortedObjects.splice(insertIndex, 0, removed);
+
+        // Reassign creation order
+        sortedObjects.forEach((obj, index) => {
+            obj.creationOrder = index;
+        });
+
+        // Update creation counter to be highest + 1
+        this.creationCounter = sortedObjects.length;
     }
 }

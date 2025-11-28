@@ -8,19 +8,25 @@ A web-based space planning application that allows users to check if items will 
 
 ## Current Implementation Status
 
-**Last Updated:** November 2025
-**Completed Phases:** 1-4 (Foundation, Objects, Interactions, Collision Detection)
-**Remaining Phases:** 5-10 (Editing, Multiple Views, Windows/Doors, Export, Polish)
+**Last Updated:** November 2025 (Post-Phase 6)
+**Current Status:** Ready for Phase 7 (Windows & Doors)
+**Completed Phases:** 1-6 (Foundation, Objects, Interactions, Collision Detection, Editing, Multiple Views)
+**Remaining Phases:** 7-10 (Windows/Doors, Statistics Refinements, Export, Polish)
 
 ### ✅ What's Working Now:
 - ✓ Room creation and visualization with grid pattern
 - ✓ Object creation, placement, movement, rotation, deletion
 - ✓ Collision detection with room boundaries and other objects
-- ✓ Per-object collision toggle for intentional overlapping
+- ✓ Per-object collision toggle for intentional overlapping/stacking
+- ✓ **Intelligent stacking system based on creation order**
 - ✓ Real-time statistics with accurate overlap handling
 - ✓ Dark theme interface
-- ✓ Top-down view rendering
+- ✓ **All four views: Top, Front, Left, Right with hotkey switching (1-4)**
+- ✓ **Full object editing modal with position fine-tuning**
+- ✓ Context menu (right-click) for object actions
+- ✓ Object duplication functionality
 - ✓ Transparent objects with colored outlines
+- ✓ Selection and manipulation in all views
 
 ### 🔄 Key Design Changes from Original Spec:
 1. **Dark Theme:** Changed from light to dark color scheme for better visibility
@@ -30,12 +36,12 @@ A web-based space planning application that allows users to check if items will 
 5. **Transparent Objects:** Objects render with 15% fill opacity, 100% outline opacity
 6. **Panel Position:** Side panel on left instead of right, collapsible
 7. **Canvas Size:** Fixed 800x600 canvas with maximized viewport usage
+8. **Creation-Order Stacking:** Objects stack based on creation order - first created = bottom of stack
+9. **Bilateral Collision Toggle:** Stacking occurs when EITHER object has collision disabled
 
 ### 📋 Still To Implement:
-- Phase 5: Full object editing modal with fine-tune controls
-- Phase 6: Multiple views (Front, Left, Right side views)
 - Phase 7: Windows and doors with architectural rendering
-- Phase 8: Statistics refinements (mostly complete)
+- Phase 8: Statistics refinements (add window/door counts if needed)
 - Phase 9: PNG export functionality
 - Phase 10: Final polish and testing
 
@@ -130,6 +136,16 @@ space-planner/
 - **`utils/`** - Pure utility functions with no dependencies
 - **Fewer files per feature** means less file-hopping during development
 - **Clear naming** (Controller/View/Renderer/Model) shows responsibility
+
+**Currently Implemented Files:**
+- ✓ All core/ files
+- ✓ All features/room/ files
+- ✓ All features/objects/ files
+- ✓ All features/views/ files
+- ✓ CollisionService.js
+- ✓ StatisticsService.js
+- ⏳ Windows/ and Doors/ features (Phase 7)
+- ⏳ ExportService.js (Phase 9)
 
 ---
 
@@ -664,42 +680,65 @@ class SpaceplannerApp {
 - **4.3** ✓ Object-to-object collision detection with AABB
 - **4.4** ✓ Implement collision toggle per object
 - **4.5** ✓ Stacking visualization (Z-ordering by creation order)
+- **4.6** ✓ Intelligent stacking system with bilateral collision rules
 
-**Deliverable:** ✓ Collisions work; can toggle per object to allow overlapping
+**Deliverable:** ✓ Collisions work; can toggle per object to allow overlapping/stacking
 
 **Implementation Notes:**
 - Real-time collision checking during placement and dragging
 - Objects snap back to valid position if collision detected
 - Per-object collision toggle via context menu
 - StatisticsService also implemented with accurate overlap handling
+- **Stacking Rules:**
+  - Creation order determines hierarchy: first created = bottom of stack
+  - Stacking occurs when EITHER object has collision disabled
+  - Example: Object A (created first, collision ON) + Object B (created second, collision OFF) → A at bottom, B stacks on top
+  - Z positions recalculate automatically when objects move, rotate, or collision toggles
+- Boundary check includes Z-axis (objects cannot exceed ceiling height)
 
 ---
 
-### Phase 5: Object Editing
+### ✅ Phase 5: Object Editing (COMPLETE)
 
 **Goal:** Fine-tune object properties after placement
 
-- **5.1** Implement `ObjectController.js` context menu handler
-- **5.2** Right-click context menu UI
-- **5.3** Edit modal for dimensions/name/color/position
-- **5.4** Property updates with re-rendering
+- **5.1** ✓ Implement `ObjectController.js` context menu handler
+- **5.2** ✓ Right-click context menu UI
+- **5.3** ✓ Edit modal for dimensions/name/color/position
+- **5.4** ✓ Property updates with re-rendering
+- **5.5** ✓ Object duplication via context menu
+- **5.6** ✓ Collision toggle via context menu
 
-**Deliverable:** Can right-click objects and edit all properties
+**Deliverable:** ✓ Can right-click objects and edit all properties
+
+**Implementation Notes:**
+- Edit modal includes X, Y, Z position fine-tuning
+- Validation prevents objects from exceeding room boundaries
+- Collision toggle updates stacking in real-time
+- Duplicate creates copy in placement mode
 
 ---
 
-### Phase 6: Multiple Views
+### ✅ Phase 6: Multiple Views (COMPLETE)
 
 **Goal:** See all four perspectives
 
-- **6.1** Implement `ViewManager.js`
-- **6.2** Implement `ViewRenderer.js` orchestration
-- **6.3** Update `ObjectRenderer.js` for side views
-- **6.4** Update `RoomRenderer.js` for side views
-- **6.5** Hotkey switching (1, 2, 3, 4)
-- **6.6** View indicator in footer
+- **6.1** ✓ Implement `ViewManager.js`
+- **6.2** ✓ Implement `ViewRenderer.js` orchestration
+- **6.3** ✓ Update `ObjectRenderer.js` for side views
+- **6.4** ✓ Update `RoomRenderer.js` for side views
+- **6.5** ✓ Hotkey switching (1, 2, 3, 4)
+- **6.6** ✓ View indicator in footer
 
-**Deliverable:** All four views render correctly; can switch with hotkeys
+**Deliverable:** ✓ All four views render correctly; can switch with hotkeys
+
+**Implementation Notes:**
+- TOP view: X-Y plane, shows floor layout
+- FRONT view: X-Z plane, shows width and height
+- LEFT view: Y-Z plane, shows length and height
+- RIGHT view: Y-Z plane (reversed), shows length and height from opposite side
+- Object selection and interaction works in all views
+- Placement only allowed in TOP view (enforced with alert)
 
 ---
 
@@ -717,16 +756,29 @@ class SpaceplannerApp {
 
 ---
 
-### Phase 8: Statistics
+### ✅ Phase 8: Statistics (MOSTLY COMPLETE)
 
 **Goal:** Real-time space utilization data
 
-- **8.1** Implement `StatisticsService.js` calculations
-- **8.2** Implement statistics panel UI
-- **8.3** Wire statistics to update on object changes
-- **8.4** Display real-time metrics
+- **8.1** ✓ Implement `StatisticsService.js` calculations
+- **8.2** ✓ Implement statistics panel UI
+- **8.3** ✓ Wire statistics to update on object changes
+- **8.4** ✓ Display real-time metrics
 
-**Deliverable:** Statistics panel updates in real-time with accurate data
+**Deliverable:** ✓ Statistics panel updates in real-time with accurate data
+
+**Current Statistics Displayed:**
+- Floor Space (m²)
+- Space Used (%)
+- Object Count
+- Total Volume (m³)
+- Tallest Object (m)
+- Remaining Height (m)
+
+**Potential Additions (Phase 8 refinement):**
+- Window count and total window area
+- Door count
+- Wall space utilization
 
 ---
 
@@ -901,25 +953,66 @@ After each phase:
 
 ## Success Criteria
 
-✅ Room can be defined with custom dimensions  
-✅ Objects can be created with all properties  
-✅ Click-to-place workflow works smoothly  
-✅ Objects can be selected, moved, rotated, deleted  
-✅ Right-click context menu allows property editing  
-✅ All four views render correctly  
-✅ Hotkeys switch views seamlessly  
-✅ Collision detection prevents leaving room  
-✅ Objects can be stacked (collision toggle)  
-✅ Windows and doors render in appropriate views  
-✅ Statistics update in real-time  
-✅ Canvas exports to PNG successfully  
-✅ UI is polished and responsive  
-✅ Code is organized and maintainable
+### ✅ Completed:
+- ✅ Room can be defined with custom dimensions
+- ✅ Objects can be created with all properties
+- ✅ Click-to-place workflow works smoothly
+- ✅ Objects can be selected, moved, rotated, deleted
+- ✅ Right-click context menu allows property editing
+- ✅ All four views render correctly
+- ✅ Hotkeys switch views seamlessly (1-4 keys)
+- ✅ Collision detection prevents leaving room
+- ✅ Objects can be stacked (bilateral collision toggle)
+- ✅ Stacking hierarchy based on creation order
+- ✅ Statistics update in real-time
+- ✅ Code is organized and maintainable
+
+### ⏳ Remaining:
+- ⏳ Windows and doors render in appropriate views
+- ⏳ Canvas exports to PNG successfully
+- ⏳ UI is polished and responsive
+- ⏳ Final testing and edge case handling
 
 ---
 
-**Project Type:** Web Application  
-**Technologies:** HTML5, CSS3, Vanilla JavaScript (OOP)  
-**Architecture:** Event-driven, feature-based  
-**Document Version:** 3.0 (Refactored)  
+**Project Type:** Web Application
+**Technologies:** HTML5, CSS3, Vanilla JavaScript (OOP)
+**Architecture:** Event-driven, feature-based
+**Document Version:** 4.0 (Post-Phase 6)
 **Last Updated:** November 2025
+
+---
+
+## Recent Updates & Bug Fixes
+
+### Phase 6 Completion (Multiple Views)
+- ✅ All four views (TOP, FRONT, LEFT, RIGHT) fully implemented
+- ✅ Hotkey switching (1-4 keys) working correctly
+- ✅ Object selection and rendering in all views
+- ✅ View indicator updates in footer
+
+### Stacking System Refinement
+**Issue Fixed:** Stacking logic now properly respects creation order in all scenarios
+
+**Previous Behavior:**
+- Objects could only stack when the BOTTOM object had collision disabled
+- Object A (created first, collision ON) could not stack on Object B (created second, collision OFF)
+
+**Current Behavior:**
+- Stacking occurs when EITHER object has collision disabled
+- Creation order ALWAYS determines hierarchy (first created = bottom)
+- Z positions recalculate automatically when:
+  - Objects are moved or dragged
+  - Objects are rotated
+  - Collision is toggled on/off
+  - Objects are deleted
+  - Object dimensions are edited
+
+**Implementation:**
+- CollisionService.js:189 - Modified calculateStackingZ to check bilateral collision
+- ObjectController.js:649 - recalculateAllZPositions maintains creation order hierarchy
+
+### Known Limitations
+- Object placement only allowed in TOP view (by design)
+- No undo/redo functionality yet
+- Windows and doors features not yet implemented

@@ -18,6 +18,7 @@ class PlaceableObject {
         this.rotation = 0; // 0, 90, 180, 270 degrees
         this.color = color;
         this.collisionEnabled = true;
+        this.visible = true;
         this.creationOrder = 0;
     }
 
@@ -115,5 +116,12 @@ class PlaceableObject {
      */
     toggleCollision() {
         this.collisionEnabled = !this.collisionEnabled;
+    }
+
+    /**
+     * Toggle visibility of this object
+     */
+    toggleVisibility() {
+        this.visible = !this.visible;
     }
 }

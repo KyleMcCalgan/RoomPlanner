@@ -57,3 +57,117 @@
     font-weight: 600;
     color: var(--text-primary);
 }
+
+/* Right Panel - Object List */
+.right-panel {
+    width: 280px;
+    background-color: var(--panel-bg);
+    border-left: 1px solid var(--border-color);
+    overflow-y: auto;
+    transition: transform 0.3s ease, width 0.3s ease;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
+    flex-shrink: 0;
+}
+
+.right-panel.collapsed {
+    transform: translateX(100%);
+    width: 0;
+    overflow: hidden;
+}
+
+.object-list {
+    min-height: 50px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.empty-message {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    padding: 0.5rem 0;
+    text-align: center;
+}
+
+.list-item {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 0.75rem;
+    margin-bottom: 0.4rem;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: grab;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.list-item:hover {
+    background-color: rgba(90, 155, 213, 0.15);
+    border-color: var(--primary-color);
+}
+
+.list-item.selected {
+    background-color: rgba(90, 155, 213, 0.25);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(90, 155, 213, 0.3);
+}
+
+.list-item.hidden {
+    opacity: 0.4;
+}
+
+.list-item.hidden .item-name::after {
+    content: " (Hidden)";
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.list-item.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.list-item.drag-over {
+    border-top: 3px solid var(--primary-color);
+}
+
+.item-color-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: 0.6rem;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.item-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.item-details {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 0.2rem;
+}
+
+.item-order {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+    flex-shrink: 0;
+}

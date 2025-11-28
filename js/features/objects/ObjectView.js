@@ -197,13 +197,14 @@ class ObjectView {
     /**
      * Update mode indicator
      * @param {string} mode - Current mode
+     * @param {number} selectedCount - Number of selected objects
      */
-    updateModeIndicator(mode) {
+    updateModeIndicator(mode, selectedCount = 0) {
         const indicator = document.getElementById('modeIndicator');
         const modeTexts = {
             'READY': 'Ready',
             'CREATING': 'Click to place object... (ESC to cancel)',
-            'EDITING': 'Editing mode'
+            'EDITING': selectedCount > 1 ? `${selectedCount} objects selected` : 'Editing mode'
         };
         indicator.textContent = modeTexts[mode] || mode;
     }
