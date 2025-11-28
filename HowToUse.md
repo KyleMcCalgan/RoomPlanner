@@ -8,10 +8,10 @@ A web-based space planning application that allows users to check if items will 
 
 ## Current Implementation Status
 
-**Last Updated:** November 2025 (Post-Phase 6)
-**Current Status:** Ready for Phase 7 (Windows & Doors)
-**Completed Phases:** 1-6 (Foundation, Objects, Interactions, Collision Detection, Editing, Multiple Views)
-**Remaining Phases:** 7-10 (Windows/Doors, Statistics Refinements, Export, Polish)
+**Last Updated:** November 2025 (Post-Phase 7.1-7.4)
+**Current Status:** Windows Complete, Ready for Doors (Phase 7.5+)
+**Completed Phases:** 1-6, 7.1-7.4 (Foundation, Objects, Views, Windows)
+**Remaining Phases:** 7.5-7.10 (Doors), 8-10 (Statistics, Export, Polish)
 
 ### ✅ What's Working Now:
 - ✓ Room creation and visualization with grid pattern
@@ -27,6 +27,15 @@ A web-based space planning application that allows users to check if items will 
 - ✓ Object duplication functionality
 - ✓ Transparent objects with colored outlines
 - ✓ Selection and manipulation in all views
+- ✓ **Windows system with full interactivity (Phases 7.1-7.4)**
+  - Window creation, placement, editing, deletion
+  - PowerPoint-style resize handles (8 handles: corners + edges)
+  - Drag to reposition along walls
+  - Keyboard shortcuts (D=duplicate, Delete, Escape)
+  - Window list in right panel with selection
+  - Top view indicators (faint lines on walls)
+  - Statistics (window count and total area)
+  - Silent collision detection (prevents overlaps)
 
 ### 🔄 Key Design Changes from Original Spec:
 1. **Dark Theme:** Changed from light to dark color scheme for better visibility
@@ -40,10 +49,17 @@ A web-based space planning application that allows users to check if items will 
 9. **Bilateral Collision Toggle:** Stacking occurs when EITHER object has collision disabled
 
 ### 📋 Still To Implement:
-- Phase 7: Windows and doors with architectural rendering
-- Phase 8: Statistics refinements (add window/door counts if needed)
+- Phase 7.5-7.10: Doors feature with swing arc visualization
+- Phase 8: Statistics refinements and additional metrics
 - Phase 9: PNG export functionality
 - Phase 10: Final polish and testing
+
+### 💡 Potential Future Enhancements (Windows):
+- Arrow key nudging for fine positioning
+- Snap to grid/intervals along walls
+- Alignment tools (align tops/bottoms, distribute evenly)
+- Window size presets (small/medium/large)
+- Multi-select windows (Ctrl+click)
 
 ---
 
@@ -142,9 +158,10 @@ space-planner/
 - ✓ All features/room/ files
 - ✓ All features/objects/ files
 - ✓ All features/views/ files
-- ✓ CollisionService.js
+- ✓ CollisionService.js (with window collision detection)
 - ✓ StatisticsService.js
-- ⏳ Windows/ and Doors/ features (Phase 7)
+- ✓ **All features/windows/ files (Phases 7.1-7.4 COMPLETE)**
+- ⏳ Doors/ features (Phase 7.5-7.10)
 - ⏳ ExportService.js (Phase 9)
 
 ---
@@ -186,8 +203,8 @@ space-planner/
 - **Controls Section:**
   - Room Setup (opens modal for dimensions)
   - Add Object (opens modal for object properties)
-  - Add Window (disabled - Phase 7)
-  - Add Door (disabled - Phase 7)
+  - Add Window (enabled - fully functional)
+  - Add Door (disabled - Phase 7.5+)
   - Export View (placeholder - Phase 9)
 - **Statistics Section:**
   - Floor Space (m²)
@@ -196,6 +213,8 @@ space-planner/
   - Total Volume (m³)
   - Tallest Object (m)
   - Remaining Height (m)
+  - **Windows Count**
+  - **Window Area (m²)**
 - Collapses completely off-screen when toggled
 - Smooth slide animation
 
@@ -354,22 +373,46 @@ class Window {
 }
 ```
 
+**`WindowManager.js` (State Management)**
+
+- Store all windows
+- CRUD operations
+- Track selected window
+- Calculate total window area
+
 **`WindowController.js` (Logic)**
 
-- Add window to room
-- Edit window properties
-- Validate position
+- Creation flow (modal → placement mode → click to place)
+- Selection (click detection in side views)
+- Movement (drag-to-reposition along wall)
+- Resizing (PowerPoint-style handles - 8 resize handles)
+- Deletion and duplication
+- Property editing
+- Keyboard shortcuts (D, Delete, Escape)
+- Cursor feedback (move, resize directions)
 
 **`WindowView.js` (UI)**
 
-- Window creation modal
-- Window list
-- Edit window modal
+- Window creation modal (wall, dimensions, heightFromFloor)
+- Edit window modal (all properties + position along wall)
+- Right-click context menu (Edit, Duplicate, Delete)
+- Default dimensions: width=20% of room, height=30% of room, heightFromFloor=30% of room
+
+**`WindowListView.js` (UI - Right Panel)**
+
+- Display all windows in list format
+- Show window number, dimensions, wall location
+- Click to select window
+- Right-click for context menu
+- Visual selection highlighting
 
 **`WindowRenderer.js` (Rendering)**
 
-- Draw windows in side views only (as cutouts)
-- Not visible in top-down view
+- **Side views (FRONT/LEFT/RIGHT):** Draw as cutouts with canvas background visible, grid removed, white border
+- **Top view:** Draw position indicators on walls (faint white lines, blue for selected)
+- Selection highlighting with blue dashed border
+- **8 Resize handles** when selected (corners + edges)
+- Preview rendering during placement
 
 ---
 
@@ -806,7 +849,9 @@ class SpaceplannerApp {
 
 ---
 
-#### Phase 7.5: Door Foundation
+----
+
+#### Phase 7.5: Door Foundation (TODO)
 **Goal:** Create door data model and infrastructure
 
 - **7.5.1** Implement `Door.js` data model
@@ -900,11 +945,21 @@ class SpaceplannerApp {
 
 ### Design Specifications for Phase 7
 
-#### Window Specifications:
-- **Default Dimensions:** Width = 8% of room width, Height = 30% of room height
+#### Window Specifications (IMPLEMENTED):
+- **Default Dimensions:** Width = 20% of room width, Height = 30% of room height
 - **Default Position:** 30% of wall height from floor
 - **Placement:** Only in FRONT, LEFT, RIGHT views (not in TOP view)
-- **Movement:** Drag along same wall only; to move to different wall, delete and recreate in appropriate view
+- **Movement:** Drag along same wall only; maintains click offset
+- **Resizing:** 8 PowerPoint-style handles (4 corners + 4 edges)
+- **Minimum Size:** 10cm width and height
+- **Collision:** Silent detection - prevents overlaps without popups
+- **Selection:** Blue dashed border with resize handles
+- **Top View:** Faint white indicator lines on walls (blue when selected)
+- **Keyboard Shortcuts:** D (duplicate), Delete/Backspace (delete), Escape (deselect)
+- **Statistics:** Window count and total area displayed
+- **List View:** Shows in right panel with name, dimensions, wall location
+
+#### Door Specifications (TODO - Phase 7.5+):ifferent wall, delete and recreate in appropriate view
 - **Rendering:** Empty cutout (canvas grey background visible, grid lines removed, thin white border)
 - **Collision:** Cannot overlap with other windows or doors; objects CAN overlap windows
 
