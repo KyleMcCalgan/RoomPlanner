@@ -212,4 +212,121 @@ class CollisionService {
         // The boundary collision check will reject if this exceeds room height
         return maxTopZ;
     }
+
+    /**
+     * Check if two windows collide (overlap on the same wall)
+     * @param {Window} window1 - First window
+     * @param {Window} window2 - Second window
+     * @returns {boolean} True if windows collide
+     */
+    checkWindowCollision(window1, window2) {
+        // Windows can only collide if they're on the same wall
+        if (window1.wall !== window2.wall) {
+            return false;
+        }
+
+        // Check overlap along the wall
+        const w1Start = window1.position;
+        const w1End = window1.position + window1.dimensions.width;
+        const w2Start = window2.position;
+        const w2End = window2.position + window2.dimensions.width;
+
+        // Check horizontal overlap
+        const horizontalOverlap = !(w1End <= w2Start || w2End <= w1Start);
+
+        // Check vertical overlap
+        const w1Bottom = window1.heightFromFloor;
+        const w1Top = window1.heightFromFloor + window1.dimensions.height;
+        const w2Bottom = window2.heightFromFloor;
+        const w2Top = window2.heightFromFloor + window2.dimensions.height;
+
+        const verticalOverlap = !(w1Top <= w2Bottom || w2Top <= w1Bottom);
+
+        return horizontalOverlap && verticalOverlap;
+    }
+
+    /**
+     * Check if a window can be placed at its current position
+     * @param {Window} window - Window to check
+     * @param {Array<Window>} allWindows - All other windows
+     * @param {Array<Door>} allDoors - All doors
+     * @param {Room} room - The room
+     * @returns {Object} {canPlace: boolean, reason: string}
+     */
+    canPlaceWindow(window, allWindows, allDoors, room) {
+        // Check if window fits within room boundaries
+        if (!window.isValidPlacement(room)) {
+            return { canPlace: false, reason: 'outside_wall' };
+        }
+
+        // Check collision with other windows
+        for (const other of allWindows) {
+            if (other.id !== window.id) {
+                if (this.checkWindowCollision(window, other)) {
+                    return { canPlace: false, reason: 'window_collision' };
+                }
+            }
+        }
+
+        // Check collision with doors (if doors exist)
+        if (allDoors) {
+            for (const door of allDoors) {
+                if (this.checkWindowDoorCollision(window, door)) {
+                    return { canPlace: false, reason: 'door_collision' };
+                }
+            }
+        }
+
+        return { canPlace: true, reason: null };
+    }
+
+    /**
+     * Check if a window and door collide (overlap on the same wall)
+     * @param {Window} window - Window object
+     * @param {Door} door - Door object
+     * @returns {boolean} True if window and door collide
+     */
+    checkWindowDoorCollision(window, door) {
+        // Can only collide if on the same wall
+        if (window.wall !== door.wall) {
+            return false;
+        }
+
+        // Check overlap along the wall
+        const wStart = window.position;
+        const wEnd = window.position + window.dimensions.width;
+        const dStart = door.position;
+        const dEnd = door.position + door.dimensions.width;
+
+        // Check horizontal overlap
+        const horizontalOverlap = !(wEnd <= dStart || dEnd <= wStart);
+
+        // Check vertical overlap
+        const wBottom = window.heightFromFloor;
+        const wTop = window.heightFromFloor + window.dimensions.height;
+        const dBottom = 0; // Doors typically start from floor
+        const dTop = door.dimensions.height;
+
+        const verticalOverlap = !(wTop <= dBottom || dTop <= wBottom);
+
+        return horizontalOverlap && verticalOverlap;
+    }
+
+    /**
+     * Get all windows that would collide with the given window
+     * @param {Window} window - Window to check
+     * @param {Array<Window>} allWindows - All other windows
+     * @returns {Array<Window>} Array of colliding windows
+     */
+    getCollidingWindows(window, allWindows) {
+        const colliding = [];
+
+        for (const other of allWindows) {
+            if (other.id !== window.id && this.checkWindowCollision(window, other)) {
+                colliding.push(other);
+            }
+        }
+
+        return colliding;
+    }
 }

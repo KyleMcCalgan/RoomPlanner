@@ -24,7 +24,7 @@
                 <h2>Controls</h2>
                 <button id="roomSetupBtn" class="btn-block">Room Setup</button>
                 <button id="addObjectBtn" class="btn-block">Add Object</button>
-                <button id="addWindowBtn" class="btn-block" disabled>Add Window</button>
+                <button id="addWindowBtn" class="btn-block">Add Window</button>
                 <button id="addDoorBtn" class="btn-block" disabled>Add Door</button>
                 <button id="exportBtn" class="btn-block">Export View</button>
             </section>
@@ -55,6 +55,14 @@
                 <div class="stat-item">
                     <span class="stat-label">Remaining Height:</span>
                     <span id="statRemainingHeight" class="stat-value">0 m</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Windows:</span>
+                    <span id="statWindowCount" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Window Area:</span>
+                    <span id="statWindowArea" class="stat-value">0 m²</span>
                 </div>
             </section>
         </aside>
@@ -230,12 +238,89 @@
         </div>
     </div>
 
+    <!-- Window Creation Modal -->
+    <div id="windowModal" class="modal">
+        <div class="modal-content">
+            <h2>Create Window</h2>
+            <form id="windowForm">
+                <div class="form-group">
+                    <label for="windowWall">Wall:</label>
+                    <select id="windowWall" required>
+                        <option value="front">Front</option>
+                        <option value="left">Left</option>
+                        <option value="right">Right</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="windowWidth">Width (m):</label>
+                    <input type="number" id="windowWidth" min="0.1" max="5" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="windowHeight">Height (m):</label>
+                    <input type="number" id="windowHeight" min="0.1" max="3" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="windowHeightFromFloor">Height from Floor (m):</label>
+                    <input type="number" id="windowHeightFromFloor" min="0" max="3" step="0.01" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelWindowBtn">Cancel</button>
+                    <button type="submit" class="btn-primary">Create & Place</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Window Edit Modal -->
+    <div id="editWindowModal" class="modal">
+        <div class="modal-content">
+            <h2>Edit Window</h2>
+            <form id="editWindowForm">
+                <div class="form-group">
+                    <label for="editWindowWall">Wall:</label>
+                    <select id="editWindowWall" required>
+                        <option value="front">Front</option>
+                        <option value="left">Left</option>
+                        <option value="right">Right</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editWindowWidth">Width (m):</label>
+                    <input type="number" id="editWindowWidth" min="0.1" max="5" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="editWindowHeight">Height (m):</label>
+                    <input type="number" id="editWindowHeight" min="0.1" max="3" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="editWindowHeightFromFloor">Height from Floor (m):</label>
+                    <input type="number" id="editWindowHeightFromFloor" min="0" max="3" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="editWindowPosition">Position Along Wall (m):</label>
+                    <input type="number" id="editWindowPosition" min="0" step="0.01" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelEditWindowBtn">Cancel</button>
+                    <button type="submit" class="btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Context Menu -->
     <div id="contextMenu" class="context-menu">
         <div class="context-menu-item" id="editObjectMenu">Edit Object</div>
         <div class="context-menu-item" id="duplicateObjectMenu">Duplicate Object</div>
         <div class="context-menu-item" id="deleteObjectMenu">Delete Object</div>
         <div class="context-menu-item" id="toggleCollisionMenu">Toggle Collision</div>
+    </div>
+
+    <!-- Window Context Menu -->
+    <div id="windowContextMenu" class="context-menu">
+        <div class="context-menu-item" id="editWindowMenu">Edit Window</div>
+        <div class="context-menu-item" id="duplicateWindowMenu">Duplicate Window</div>
+        <div class="context-menu-item" id="deleteWindowMenu">Delete Window</div>
     </div>
 
     <!-- List Item Context Menu -->
@@ -309,6 +394,26 @@
                 </div>
 
                 <div class="shortcuts-section">
+                    <h3>Window Actions</h3>
+                    <div class="shortcut-item">
+                        <kbd>D</kbd>
+                        <span>Duplicate Selected</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Delete</kbd>
+                        <span>Delete Selected</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Escape</kbd>
+                        <span>Deselect</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Drag Handle</kbd>
+                        <span>Resize Window</span>
+                    </div>
+                </div>
+
+                <div class="shortcuts-section">
                     <h3>Selection</h3>
                     <div class="shortcut-item">
                         <kbd>Ctrl</kbd> + <kbd>Click</kbd>
@@ -368,6 +473,14 @@
     <script src="js/features/objects/ObjectRenderer.js"></script>
     <script src="js/features/objects/ObjectView.js"></script>
     <script src="js/features/objects/ObjectListView.js"></script>
+
+    <!-- Windows -->
+    <script src="js/features/windows/Window.js"></script>
+    <script src="js/features/windows/WindowManager.js"></script>
+    <script src="js/features/windows/WindowController.js"></script>
+    <script src="js/features/windows/WindowRenderer.js"></script>
+    <script src="js/features/windows/WindowView.js"></script>
+    <script src="js/features/windows/WindowListView.js"></script>
 
     <!-- Views -->
     <script src="js/features/views/ViewManager.js"></script>

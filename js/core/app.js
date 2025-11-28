@@ -16,6 +16,9 @@ class SpacePlannerApp {
         // Initialize object manager
         this.objectManager = new ObjectManager();
 
+        // Initialize window manager
+        this.windowManager = new WindowManager();
+
         // Initialize controllers
         this.roomController = new RoomController(this.room, this.eventBus, this.viewport);
 
@@ -23,6 +26,7 @@ class SpacePlannerApp {
         this.roomView = new RoomView(this.roomController, this.eventBus);
         this.objectView = new ObjectView(this.eventBus, this.objectManager);
         this.objectListView = new ObjectListView(this.eventBus, this.objectManager);
+        this.windowListView = new WindowListView(this.eventBus, this.windowManager);
 
         // Initialize renderers
         this.roomRenderer = new RoomRenderer(this.room, this.viewport);
@@ -34,7 +38,13 @@ class SpacePlannerApp {
 
         // Initialize view system
         this.viewManager = new ViewManager(this.eventBus);
-        this.viewRenderer = new ViewRenderer(this.viewManager, this.roomRenderer, this.objectRenderer);
+
+        // Initialize window components
+        this.windowView = new WindowView(this.eventBus, this.windowManager, this.room);
+        this.windowRenderer = new WindowRenderer(this.windowManager, this.room, this.viewport, null); // windowController added later
+
+        // Update view renderer to include window renderer
+        this.viewRenderer = new ViewRenderer(this.viewManager, this.roomRenderer, this.objectRenderer, this.windowRenderer);
 
         // Initialize object controller (needs viewManager for click detection)
         this.objectController = new ObjectController(
@@ -48,14 +58,35 @@ class SpacePlannerApp {
             this.viewManager
         );
 
+        // Initialize window controller (needs viewManager for click detection)
+        this.windowController = new WindowController(
+            this.windowManager,
+            this.viewport,
+            this.eventBus,
+            this.windowView,
+            this.collisionService,
+            this.room,
+            this.viewManager,
+            this.windowRenderer
+        );
+
+        // Update window renderer with controller reference
+        this.windowRenderer.windowController = this.windowController;
+
         // Setup event listeners
         this.setupEventListeners();
 
         // Setup UI
         this.setupUI();
 
+        // Set initial window button state based on current view
+        this.windowView.updateButtonState(this.viewManager.getCurrentView());
+
         // Initial render
         this.render();
+
+        // Initial window list render
+        this.windowListView.render();
 
         console.log('Space Planner App initialized successfully!');
     }
@@ -88,6 +119,8 @@ class SpacePlannerApp {
             this.render();
         });
         this.eventBus.on('object:selected', () => {
+            // Deselect any selected window when an object is selected
+            this.windowManager.deselectWindow();
             const count = this.objectManager.getSelectedCount();
             this.objectView.updateModeIndicator(count > 0 ? 'EDITING' : 'READY', count);
             this.render();
@@ -103,8 +136,38 @@ class SpacePlannerApp {
             this.render();
         });
 
+        // Window events
+        this.eventBus.on('window:added', () => {
+            this.render();
+            this.updateStatistics();
+        });
+        this.eventBus.on('window:updated', () => {
+            this.render();
+            this.updateStatistics();
+        });
+        this.eventBus.on('window:deleted', () => {
+            this.render();
+            this.updateStatistics();
+        });
+        this.eventBus.on('window:selected', () => {
+            // Deselect all objects when a window is selected
+            this.objectManager.deselectAll();
+            this.render();
+        });
+        this.eventBus.on('window:deselected', () => {
+            this.render();
+        });
+
+        // Deselect all objects (for when clicking on windows)
+        this.eventBus.on('object:deselect-all', () => {
+            this.objectManager.deselectAll();
+            this.render();
+        });
+
         // List view events
         this.eventBus.on('list:object-clicked', (data) => {
+            // Deselect windows when selecting object
+            this.windowManager.deselectWindow();
             // Select the object when clicked from list
             this.objectManager.selectObject(data.objectId);
             this.eventBus.emit('object:selected', { objectId: data.objectId });
@@ -314,6 +377,7 @@ class SpacePlannerApp {
      */
     updateStatistics() {
         const objects = this.objectManager.getAllObjects();
+        const windows = this.windowManager.getAllWindows();
 
         // Use StatisticsService for accurate calculations (handles overlaps)
         const floorArea = this.statisticsService.calculateFloorArea(this.room);
@@ -322,11 +386,16 @@ class SpacePlannerApp {
         const tallestHeight = this.statisticsService.getTallestObject(objects);
         const remainingHeight = this.statisticsService.calculateRemainingHeight(objects, this.room);
 
+        // Window statistics
+        const windowCount = windows.length;
+        const totalWindowArea = this.windowManager.getTotalArea();
+
         // Convert to meters for display
         const floorAreaM2 = floorArea / 10000; // cm² to m²
         const totalVolumeM3 = totalVolume / 1000000; // cm³ to m³
         const tallestHeightM = tallestHeight / 100; // cm to m
         const remainingHeightM = remainingHeight / 100; // cm to m
+        const windowAreaM2 = totalWindowArea / 10000; // cm² to m²
 
         // Update UI
         document.getElementById('statFloorSpace').textContent = `${formatNumber(floorAreaM2)} m²`;
@@ -335,6 +404,8 @@ class SpacePlannerApp {
         document.getElementById('statTotalVolume').textContent = `${formatNumber(totalVolumeM3)} m³`;
         document.getElementById('statTallestObject').textContent = `${formatNumber(tallestHeightM)} m`;
         document.getElementById('statRemainingHeight').textContent = `${formatNumber(remainingHeightM)} m`;
+        document.getElementById('statWindowCount').textContent = windowCount;
+        document.getElementById('statWindowArea').textContent = `${formatNumber(windowAreaM2)} m²`;
     }
 }
 
