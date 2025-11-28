@@ -744,15 +744,200 @@ class SpaceplannerApp {
 
 ### Phase 7: Windows & Doors
 
-**Goal:** Add architectural features
+**Goal:** Add architectural features with full interaction support
 
-- **7.1** Implement `Window.js`, `WindowController.js`, `WindowView.js`, `WindowRenderer.js`
-- **7.2** Window creation and rendering in side views
-- **7.3** Implement `Door.js`, `DoorController.js`, `DoorView.js`, `DoorRenderer.js`
-- **7.4** Door swing arc visualization (top-down)
-- **7.5** Door cutout in side views
+#### Phase 7.1: Window Foundation
+**Goal:** Create window data model and basic infrastructure
 
-**Deliverable:** Can add windows and doors; they render correctly
+- **7.1.1** Implement `Window.js` data model
+  - Properties: wall, position, width, height, heightFromFloor, id
+  - Validation methods for bounds and placement
+- **7.1.2** Implement `WindowManager.js` for CRUD operations
+- **7.1.3** Update Room.js to store windows array
+- **7.1.4** Add window-window collision detection to CollisionService
+
+**Deliverable:** Window data structures and management ready
+
+---
+
+#### Phase 7.2: Window UI & Creation
+**Goal:** Allow users to create windows through modal interface
+
+- **7.2.1** Implement `WindowView.js` - UI components
+  - Creation modal: wall dropdown, dimensions, heightFromFloor
+  - Default dimensions: width=8% of room, height=30% of room, heightFromFloor=30% of room
+  - Edit modal and right-click context menu
+- **7.2.2** Implement `WindowController.js` - Creation flow
+  - Handle "Add Window" button → modal → placement mode
+  - Window preview at cursor (only in FRONT/LEFT/RIGHT views)
+  - Validate no overlap with other windows/doors
+  - Click to place on wall
+- **7.2.3** Wire up UI buttons and event handlers
+
+**Deliverable:** Can create windows via modal and place them
+
+---
+
+#### Phase 7.3: Window Rendering
+**Goal:** Visualize windows in side views
+
+- **7.3.1** Implement `WindowRenderer.js` - Drawing logic
+  - Render only in FRONT, LEFT, RIGHT views (not visible in TOP)
+  - Draw as cutout: grey canvas background visible, grid lines removed in window area, thin white border
+  - Calculate correct position based on wall and heightFromFloor
+- **7.3.2** Update ViewRenderer.js to call WindowRenderer
+- **7.3.3** Add selection highlighting for windows
+- **7.3.4** Add hover effects
+
+**Deliverable:** Windows render correctly in side views as cutouts
+
+---
+
+#### Phase 7.4: Window Interactions
+**Goal:** Make windows fully interactive
+
+- **7.4.1** Implement click detection for window selection
+- **7.4.2** Implement drag-to-move along wall (constrained to same wall)
+- **7.4.3** Implement right-click context menu → Edit/Delete
+- **7.4.4** Add windows to right-hand panel list (similar to ObjectListView)
+- **7.4.5** Update statistics panel: window count, total wall area used
+
+**Deliverable:** Windows are fully interactive - selectable, movable, editable, deletable
+
+---
+
+#### Phase 7.5: Door Foundation
+**Goal:** Create door data model and infrastructure
+
+- **7.5.1** Implement `Door.js` data model
+  - Properties: wall, position, width, height, swingDirection (inward/outward), hingePosition (left/right), id
+  - Methods: getSwingArc() for rendering swing arc, validation
+- **7.5.2** Implement `DoorManager.js` for CRUD operations
+- **7.5.3** Update Room.js to store doors array
+- **7.5.4** Add door-door and door-window collision detection to CollisionService
+
+**Deliverable:** Door data structures and management ready
+
+---
+
+#### Phase 7.6: Door UI & Creation
+**Goal:** Allow users to create doors through modal interface
+
+- **7.6.1** Implement `DoorView.js` - UI components
+  - Creation modal: wall dropdown, dimensions, swingDirection (inward/outward), hingePosition (left/right)
+  - Default dimensions: width=10% of room, height=80% of room
+  - Edit modal and right-click context menu
+- **7.6.2** Implement `DoorController.js` - Creation flow
+  - Handle placement mode with view-specific behavior:
+    - TOP view: door + arc visible, draggable to any wall
+    - Side views: door visible as cutout, constrained to current wall
+  - Preview door with swing arc
+  - Validate no overlap with other doors/windows
+- **7.6.3** Wire up UI buttons and event handlers
+
+**Deliverable:** Can create doors via modal and place them with appropriate behavior per view
+
+---
+
+#### Phase 7.7: Door Rendering
+**Goal:** Visualize doors in all views
+
+- **7.7.1** Implement `DoorRenderer.js` - Drawing logic
+  - **TOP view:** Draw small rectangle for door + swing arc (quarter circle)
+  - **Side views:** Draw as cutout (grey background, no grid, thin white border)
+  - Calculate swing arc based on swingDirection and hingePosition
+  - Handle door thickness/width representation
+- **7.7.2** Update ViewRenderer.js to call DoorRenderer for all views
+- **7.7.3** Add selection highlighting and hover effects
+
+**Deliverable:** Doors render correctly in all views with swing arc in TOP view
+
+---
+
+#### Phase 7.8: Door Interactions
+**Goal:** Make doors fully interactive
+
+- **7.8.1** Implement click detection and selection in all views
+- **7.8.2** Implement drag-to-move with view-specific behavior:
+  - TOP view: drag to any wall, snap to nearest wall
+  - Side views: drag along same wall only (similar to windows)
+- **7.8.3** Implement right-click context menu → Edit/Delete
+- **7.8.4** Add doors to right-hand panel list
+- **7.8.5** Update statistics: door count, wall area used
+
+**Deliverable:** Doors are fully interactive with view-specific movement behavior
+
+---
+
+#### Phase 7.9: Collision & Clearance Logic
+**Goal:** Implement advanced collision detection and clearance warnings
+
+- **7.9.1** Implement door swing arc collision detection with objects
+- **7.9.2** Add visual indicators when objects block door swing (clearance warnings)
+- **7.9.3** Update statistics panel with clearance warnings count/details
+- **7.9.4** Ensure validation prevents window/door overlap during placement and editing
+- **7.9.5** Verify objects can overlap windows/doors (realistic behavior)
+
+**Deliverable:** Comprehensive collision system with clearance warnings for blocked doors
+
+---
+
+#### Phase 7.10: Integration & Polish
+**Goal:** Ensure seamless integration with existing features
+
+- **7.10.1** Test window placement, editing, deletion in all side views
+- **7.10.2** Test door placement, editing, deletion with view switching
+- **7.10.3** Verify statistics update correctly for all operations
+- **7.10.4** Test interaction between windows, doors, and objects
+- **7.10.5** Ensure view switching maintains window/door state correctly
+- **7.10.6** Polish UI styling to match dark theme
+- **7.10.7** Add keyboard shortcuts if beneficial (optional)
+- **7.10.8** Update right-hand panel to show windows/doors with proper icons/labels
+
+**Deliverable:** Fully polished and integrated windows & doors feature
+
+---
+
+### Design Specifications for Phase 7
+
+#### Window Specifications:
+- **Default Dimensions:** Width = 8% of room width, Height = 30% of room height
+- **Default Position:** 30% of wall height from floor
+- **Placement:** Only in FRONT, LEFT, RIGHT views (not in TOP view)
+- **Movement:** Drag along same wall only; to move to different wall, delete and recreate in appropriate view
+- **Rendering:** Empty cutout (canvas grey background visible, grid lines removed, thin white border)
+- **Collision:** Cannot overlap with other windows or doors; objects CAN overlap windows
+
+#### Door Specifications:
+- **Default Dimensions:** Width = 10% of room width, Height = 80% of room height
+- **Swing Direction:** User chooses inward or outward during creation
+- **Hinge Position:** User chooses left or right during creation
+- **Placement:**
+  - TOP view: Shows small rectangle + swing arc, draggable to any wall
+  - Side views: Shows as cutout, draggable along same wall only
+- **Movement:** View-specific behavior (TOP = any wall, Side = same wall only)
+- **Rendering:**
+  - TOP view: Rectangle + quarter-circle swing arc
+  - Side views: Empty cutout (canvas grey background, no grid, thin white border)
+- **Collision:** Cannot overlap with other doors or windows; objects CAN overlap doors
+- **Clearance:** Detect if swing arc is blocked by objects and show warnings
+
+#### Wall Naming Convention:
+- **Front Wall:** Bottom edge in TOP view (Y=0)
+- **Back Wall:** Top edge in TOP view (Y=length)
+- **Left Wall:** Left edge in TOP view (X=0)
+- **Right Wall:** Right edge in TOP view (X=width)
+
+#### UI Integration:
+- **Panel List:** Windows and doors appear in right-hand panel (similar to ObjectListView)
+- **Context Menu:** Right-click on window/door → Edit, Delete, Move options
+- **Statistics Updates:**
+  - Window count
+  - Door count
+  - Total wall area used by windows/doors (as percentage)
+  - Clearance warnings (number of doors blocked by objects)
+
+**Complete Deliverable:** Fully functional windows and doors with creation, placement, editing, movement, deletion, and statistics integration
 
 ---
 
