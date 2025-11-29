@@ -4,7 +4,7 @@ An interactive web-based space planning application that allows users to design 
 
 ***
 
-## 🚀 Pre-release v1.0
+## Pre-release v0.9
 
 This project is currently in a pre-release stage. It is functionally complete and includes the core features for room, object, and window management. The final 1.0 release will include some additional improvements to doors, export functionality, and general polish.
 
