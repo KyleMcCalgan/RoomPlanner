@@ -25,7 +25,7 @@
                 <button id="roomSetupBtn" class="btn-block">Room Setup</button>
                 <button id="addObjectBtn" class="btn-block">Add Object</button>
                 <button id="addWindowBtn" class="btn-block">Add Window</button>
-                <button id="addDoorBtn" class="btn-block" disabled>Add Door</button>
+                <button id="addDoorBtn" class="btn-block">Add Door</button>
                 <button id="exportBtn" class="btn-block">Export View</button>
             </section>
 
@@ -63,6 +63,14 @@
                 <div class="stat-item">
                     <span class="stat-label">Window Area:</span>
                     <span id="statWindowArea" class="stat-value">0 m²</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Doors:</span>
+                    <span id="statDoorCount" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Blocked Doors:</span>
+                    <span id="statBlockedDoors" class="stat-value">0</span>
                 </div>
             </section>
         </aside>
@@ -323,6 +331,95 @@
         <div class="context-menu-item" id="deleteWindowMenu">Delete Window</div>
     </div>
 
+    <!-- Door Creation Modal -->
+    <div id="doorModal" class="modal">
+        <div class="modal-content">
+            <h2>Create Door</h2>
+            <form id="doorForm">
+                <div class="form-group">
+                    <label for="doorWidth">Width (m):</label>
+                    <input type="number" id="doorWidth" min="0.1" max="5" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="doorHeight">Height (m):</label>
+                    <input type="number" id="doorHeight" min="0.1" max="3" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="doorSwingDirection">Swing Direction:</label>
+                    <select id="doorSwingDirection" required>
+                        <option value="inward">Inward (into room)</option>
+                        <option value="outward">Outward (out of room)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="doorHingePosition">Hinge Position:</label>
+                    <select id="doorHingePosition" required>
+                        <option value="left">Left</option>
+                        <option value="right">Right</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelDoorBtn">Cancel</button>
+                    <button type="submit" class="btn-primary">Create & Place</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Door Edit Modal -->
+    <div id="editDoorModal" class="modal">
+        <div class="modal-content">
+            <h2>Edit Door</h2>
+            <form id="editDoorForm">
+                <div class="form-group">
+                    <label for="editDoorWall">Wall:</label>
+                    <select id="editDoorWall" required>
+                        <option value="front">Front</option>
+                        <option value="left">Left</option>
+                        <option value="right">Right</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editDoorWidth">Width (m):</label>
+                    <input type="number" id="editDoorWidth" min="0.1" max="5" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="editDoorHeight">Height (m):</label>
+                    <input type="number" id="editDoorHeight" min="0.1" max="3" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="editDoorSwingDirection">Swing Direction:</label>
+                    <select id="editDoorSwingDirection" required>
+                        <option value="inward">Inward (into room)</option>
+                        <option value="outward">Outward (out of room)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editDoorHingePosition">Hinge Position:</label>
+                    <select id="editDoorHingePosition" required>
+                        <option value="left">Left</option>
+                        <option value="right">Right</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editDoorPosition">Position Along Wall (m):</label>
+                    <input type="number" id="editDoorPosition" min="0" step="0.01" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelEditDoorBtn">Cancel</button>
+                    <button type="submit" class="btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Door Context Menu -->
+    <div id="doorContextMenu" class="context-menu">
+        <div class="context-menu-item" id="editDoorMenu">Edit Door</div>
+        <div class="context-menu-item" id="duplicateDoorMenu">Duplicate Door</div>
+        <div class="context-menu-item" id="deleteDoorMenu">Delete Door</div>
+    </div>
+
     <!-- List Item Context Menu -->
     <div id="listContextMenu" class="context-menu">
         <div class="context-menu-item" id="listEditObjectMenu">Edit Object</div>
@@ -481,6 +578,14 @@
     <script src="js/features/windows/WindowRenderer.js"></script>
     <script src="js/features/windows/WindowView.js"></script>
     <script src="js/features/windows/WindowListView.js"></script>
+
+    <!-- Doors -->
+    <script src="js/features/doors/Door.js"></script>
+    <script src="js/features/doors/DoorManager.js"></script>
+    <script src="js/features/doors/DoorController.js"></script>
+    <script src="js/features/doors/DoorRenderer.js"></script>
+    <script src="js/features/doors/DoorView.js"></script>
+    <script src="js/features/doors/DoorListView.js"></script>
 
     <!-- Views -->
     <script src="js/features/views/ViewManager.js"></script>

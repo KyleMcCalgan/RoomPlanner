@@ -1256,3 +1256,13 @@ After each phase:
 - Object placement only allowed in TOP view (by design)
 - No undo/redo functionality yet
 - Windows and doors features not yet implemented
+
+
+
+add the foor arc to the side views to make placing easier (if the door is on the right wall we should see the maximum arc front eh front view )
+
+
+add difference between custom objects and preCreated obejcts
+add keybinds to create object, custom object, window, door
+windows and doors should not overlap
+Further down the line I want undo redo functionality

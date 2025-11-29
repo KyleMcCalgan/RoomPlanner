@@ -19,6 +19,9 @@ class SpacePlannerApp {
         // Initialize window manager
         this.windowManager = new WindowManager();
 
+        // Initialize door manager
+        this.doorManager = new DoorManager();
+
         // Initialize controllers
         this.roomController = new RoomController(this.room, this.eventBus, this.viewport);
 
@@ -27,6 +30,7 @@ class SpacePlannerApp {
         this.objectView = new ObjectView(this.eventBus, this.objectManager);
         this.objectListView = new ObjectListView(this.eventBus, this.objectManager);
         this.windowListView = new WindowListView(this.eventBus, this.windowManager);
+        this.doorListView = new DoorListView(this.eventBus, this.doorManager);
 
         // Initialize renderers
         this.roomRenderer = new RoomRenderer(this.room, this.viewport);
@@ -43,8 +47,12 @@ class SpacePlannerApp {
         this.windowView = new WindowView(this.eventBus, this.windowManager, this.room);
         this.windowRenderer = new WindowRenderer(this.windowManager, this.room, this.viewport, null); // windowController added later
 
-        // Update view renderer to include window renderer
-        this.viewRenderer = new ViewRenderer(this.viewManager, this.roomRenderer, this.objectRenderer, this.windowRenderer);
+        // Initialize door components
+        this.doorView = new DoorView(this.eventBus, this.doorManager, this.room);
+        this.doorRenderer = new DoorRenderer(this.doorManager, this.room, this.viewport, null); // doorController added later
+
+        // Update view renderer to include window and door renderers
+        this.viewRenderer = new ViewRenderer(this.viewManager, this.roomRenderer, this.objectRenderer, this.windowRenderer, this.doorRenderer);
 
         // Initialize object controller (needs viewManager for click detection)
         this.objectController = new ObjectController(
@@ -73,20 +81,38 @@ class SpacePlannerApp {
         // Update window renderer with controller reference
         this.windowRenderer.windowController = this.windowController;
 
+        // Initialize door controller (needs windowManager for collision detection)
+        this.doorController = new DoorController(
+            this.doorManager,
+            this.viewport,
+            this.eventBus,
+            this.doorView,
+            this.collisionService,
+            this.room,
+            this.viewManager,
+            this.windowManager,
+            this.doorRenderer
+        );
+
+        // Update door renderer with controller reference
+        this.doorRenderer.doorController = this.doorController;
+
         // Setup event listeners
         this.setupEventListeners();
 
         // Setup UI
         this.setupUI();
 
-        // Set initial window button state based on current view
+        // Set initial window and door button states based on current view
         this.windowView.updateButtonState(this.viewManager.getCurrentView());
+        this.doorView.updateButtonState(this.viewManager.getCurrentView());
 
         // Initial render
         this.render();
 
-        // Initial window list render
+        // Initial window and door list renders
         this.windowListView.render();
+        this.doorListView.render();
 
         console.log('Space Planner App initialized successfully!');
     }
@@ -98,20 +124,25 @@ class SpacePlannerApp {
         // Render events
         this.eventBus.on('room:updated', () => this.render());
         this.eventBus.on('object:added', () => {
+            this.updateDoorBlockedStatus();
             this.render();
             this.updateStatistics();
         });
         this.eventBus.on('object:moved', () => {
+            this.updateDoorBlockedStatus();
             this.updateStatistics();
         });
         this.eventBus.on('object:rotated', () => {
+            this.updateDoorBlockedStatus();
             this.updateStatistics();
         });
         this.eventBus.on('object:deleted', () => {
+            this.updateDoorBlockedStatus();
             this.render();
             this.updateStatistics();
         });
         this.eventBus.on('object:updated', () => {
+            this.updateDoorBlockedStatus();
             this.render();
             this.updateStatistics();
         });
@@ -158,9 +189,46 @@ class SpacePlannerApp {
             this.render();
         });
 
-        // Deselect all objects (for when clicking on windows)
+        // Door events
+        this.eventBus.on('door:created', () => {
+            this.updateDoorBlockedStatus();
+            this.render();
+            this.updateStatistics();
+        });
+        this.eventBus.on('door:updated', () => {
+            this.updateDoorBlockedStatus();
+            this.render();
+            this.updateStatistics();
+        });
+        this.eventBus.on('door:deleted', () => {
+            this.updateDoorBlockedStatus();
+            this.render();
+            this.updateStatistics();
+        });
+        this.eventBus.on('door:moved', () => {
+            this.updateDoorBlockedStatus();
+            this.render();
+            this.updateStatistics();
+        });
+        this.eventBus.on('door:selected', () => {
+            // Deselect all objects and windows when a door is selected
+            this.objectManager.deselectAll();
+            this.windowManager.deselectWindow();
+            this.render();
+        });
+        this.eventBus.on('door:deselected', () => {
+            this.render();
+        });
+
+        // Deselect all objects (for when clicking on windows/doors)
         this.eventBus.on('object:deselect-all', () => {
             this.objectManager.deselectAll();
+            this.render();
+        });
+
+        // Deselect all windows (for when clicking on doors)
+        this.eventBus.on('window:deselect-all', () => {
+            this.windowManager.deselectWindow();
             this.render();
         });
 
@@ -378,6 +446,7 @@ class SpacePlannerApp {
     updateStatistics() {
         const objects = this.objectManager.getAllObjects();
         const windows = this.windowManager.getAllWindows();
+        const doors = this.doorManager.getAllDoors();
 
         // Use StatisticsService for accurate calculations (handles overlaps)
         const floorArea = this.statisticsService.calculateFloorArea(this.room);
@@ -389,6 +458,10 @@ class SpacePlannerApp {
         // Window statistics
         const windowCount = windows.length;
         const totalWindowArea = this.windowManager.getTotalArea();
+
+        // Door statistics
+        const doorCount = doors.length;
+        const blockedDoorCount = this.doorManager.getBlockedCount();
 
         // Convert to meters for display
         const floorAreaM2 = floorArea / 10000; // cm² to m²
@@ -406,6 +479,21 @@ class SpacePlannerApp {
         document.getElementById('statRemainingHeight').textContent = `${formatNumber(remainingHeightM)} m`;
         document.getElementById('statWindowCount').textContent = windowCount;
         document.getElementById('statWindowArea').textContent = `${formatNumber(windowAreaM2)} m²`;
+        document.getElementById('statDoorCount').textContent = doorCount;
+        document.getElementById('statBlockedDoors').textContent = blockedDoorCount;
+    }
+
+    /**
+     * Update blocked status for all doors based on current object positions
+     */
+    updateDoorBlockedStatus() {
+        const doors = this.doorManager.getAllDoors();
+        const objects = this.objectManager.getAllObjects();
+
+        this.collisionService.updateDoorBlockedStatus(doors, objects, this.room);
+
+        // Update door list to reflect blocked status
+        this.doorListView.render();
     }
 }
 

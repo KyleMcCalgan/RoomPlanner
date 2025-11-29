@@ -329,4 +329,188 @@ class CollisionService {
 
         return colliding;
     }
+
+    /**
+     * Check if two doors collide (overlap on the same wall)
+     * @param {Door} door1 - First door
+     * @param {Door} door2 - Second door
+     * @returns {boolean} True if doors collide
+     */
+    checkDoorCollision(door1, door2) {
+        // Doors can only collide if they're on the same wall
+        if (door1.wall !== door2.wall) {
+            return false;
+        }
+
+        // Check overlap along the wall
+        const d1Start = door1.position;
+        const d1End = door1.position + door1.dimensions.width;
+        const d2Start = door2.position;
+        const d2End = door2.position + door2.dimensions.width;
+
+        // Check horizontal overlap
+        const horizontalOverlap = !(d1End <= d2Start || d2End <= d1Start);
+
+        // Check vertical overlap
+        const d1Bottom = 0; // Doors start from floor
+        const d1Top = door1.dimensions.height;
+        const d2Bottom = 0;
+        const d2Top = door2.dimensions.height;
+
+        const verticalOverlap = !(d1Top <= d2Bottom || d2Top <= d1Bottom);
+
+        return horizontalOverlap && verticalOverlap;
+    }
+
+    /**
+     * Check if a door can be placed at its current position
+     * @param {Door} door - Door to check
+     * @param {Array<Door>} allDoors - All other doors
+     * @param {Array<Window>} allWindows - All windows
+     * @param {Room} room - The room
+     * @returns {Object} {canPlace: boolean, reason: string}
+     */
+    canPlaceDoor(door, allDoors, allWindows, room) {
+        // Check if door fits within room boundaries
+        if (!door.isValidPlacement(room)) {
+            return { canPlace: false, reason: 'outside_wall' };
+        }
+
+        // Check collision with other doors
+        for (const other of allDoors) {
+            if (other.id !== door.id) {
+                if (this.checkDoorCollision(door, other)) {
+                    return { canPlace: false, reason: 'door_collision' };
+                }
+            }
+        }
+
+        // Check collision with windows
+        if (allWindows) {
+            for (const window of allWindows) {
+                if (this.checkWindowDoorCollision(window, door)) {
+                    return { canPlace: false, reason: 'window_collision' };
+                }
+            }
+        }
+
+        return { canPlace: true, reason: null };
+    }
+
+    /**
+     * Check if a door's swing arc is blocked by any objects
+     * @param {Door} door - Door to check
+     * @param {Array<PlaceableObject>} allObjects - All objects in the room
+     * @param {Room} room - The room
+     * @returns {boolean} True if swing arc is blocked
+     */
+    checkDoorSwingArcCollision(door, allObjects, room) {
+        // No collision check for outward-swinging doors (no arc drawn)
+        if (door.swingDirection === 'outward') {
+            return false;
+        }
+
+        const arc = door.getSwingArc(room);
+        if (!arc) return false;
+
+        // Doors are at floor level (Z=0) and extend up to door.dimensions.height
+        const doorBottom = 0;
+        const doorTop = door.dimensions.height;
+
+        // Check if any object's footprint intersects with the swing arc
+        for (const obj of allObjects) {
+            // IMPORTANT: Only check objects that are actually at floor level
+            // An object blocks the door if it overlaps with the door's height range
+            const objBottom = obj.position.z;
+            const objTop = obj.position.z + obj.dimensions.height;
+
+            // Check if object overlaps with door height (both at floor level)
+            const heightOverlap = objBottom < doorTop && objTop > doorBottom;
+
+            // Skip this object if it's above the door (e.g., floating or on a shelf)
+            if (!heightOverlap) {
+                continue;
+            }
+
+            const bounds = obj.getBounds();
+
+            // Sample points around the object's perimeter to check if they're in the arc
+            // We'll check the 4 corners of the object
+            const corners = [
+                { x: bounds.x, y: bounds.y },
+                { x: bounds.x + bounds.width, y: bounds.y },
+                { x: bounds.x, y: bounds.y + bounds.height },
+                { x: bounds.x + bounds.width, y: bounds.y + bounds.height }
+            ];
+
+            // Also check center point for better coverage
+            corners.push({
+                x: bounds.x + bounds.width / 2,
+                y: bounds.y + bounds.height / 2
+            });
+
+            // If any corner is in the swing arc, the door is blocked
+            for (const corner of corners) {
+                if (door.isPointInSwingArc(corner.x, corner.y, room)) {
+                    return true;
+                }
+            }
+
+            // Also check if the arc passes through the object
+            // by checking points along the object's edges
+            const edgePoints = [];
+            const steps = 4;
+            for (let i = 0; i <= steps; i++) {
+                const t = i / steps;
+                // Top edge
+                edgePoints.push({ x: bounds.x + bounds.width * t, y: bounds.y });
+                // Bottom edge
+                edgePoints.push({ x: bounds.x + bounds.width * t, y: bounds.y + bounds.height });
+                // Left edge
+                edgePoints.push({ x: bounds.x, y: bounds.y + bounds.height * t });
+                // Right edge
+                edgePoints.push({ x: bounds.x + bounds.width, y: bounds.y + bounds.height * t });
+            }
+
+            for (const point of edgePoints) {
+                if (door.isPointInSwingArc(point.x, point.y, room)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Update blocked status for all doors based on object positions
+     * @param {Array<Door>} allDoors - All doors
+     * @param {Array<PlaceableObject>} allObjects - All objects
+     * @param {Room} room - The room
+     */
+    updateDoorBlockedStatus(allDoors, allObjects, room) {
+        for (const door of allDoors) {
+            const isBlocked = this.checkDoorSwingArcCollision(door, allObjects, room);
+            door.setBlocked(isBlocked);
+        }
+    }
+
+    /**
+     * Get all doors that are blocked by objects
+     * @param {Array<Door>} allDoors - All doors
+     * @param {Array<PlaceableObject>} allObjects - All objects
+     * @param {Room} room - The room
+     * @returns {Array<Door>} Array of blocked doors
+     */
+    getBlockedDoors(allDoors, allObjects, room) {
+        const blocked = [];
+
+        for (const door of allDoors) {
+            if (this.checkDoorSwingArcCollision(door, allObjects, room)) {
+                blocked.push(door);
+            }
+        }
+
+        return blocked;
+    }
 }
