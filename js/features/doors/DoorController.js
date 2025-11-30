@@ -99,9 +99,11 @@ class DoorController {
             case 'FRONT':
                 return 'front';
             case 'LEFT':
-                return 'left';
-            case 'RIGHT':
+                // LEFT view means looking FROM left TOWARDS right - so we see the RIGHT wall
                 return 'right';
+            case 'RIGHT':
+                // RIGHT view means looking FROM right TOWARDS left - so we see the LEFT wall
+                return 'left';
             default:
                 return 'front';
         }

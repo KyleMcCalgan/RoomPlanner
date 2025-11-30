@@ -45,14 +45,36 @@ class DoorRenderer {
             return true; // All doors visible in top view
         }
 
-        // Doors are only visible on their respective walls in side views
+        // Doors visible in their own wall view AND perpendicular views (to show arc)
+        switch (view) {
+            case 'FRONT':
+                // FRONT view shows: doors on front wall (full door) + doors on left/right walls (arc only)
+                return door.wall === 'front' || door.wall === 'left' || door.wall === 'right';
+            case 'LEFT':
+                // LEFT view shows RIGHT wall, so show doors on right wall (full door) + doors on front/back walls (arc only)
+                return door.wall === 'right' || door.wall === 'front' || door.wall === 'back';
+            case 'RIGHT':
+                // RIGHT view shows LEFT wall, so show doors on left wall (full door) + doors on front/back walls (arc only)
+                return door.wall === 'left' || door.wall === 'front' || door.wall === 'back';
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Check if door is on the wall being directly viewed (not perpendicular)
+     * @param {Door} door - Door to check
+     * @param {string} view - Current view
+     * @returns {boolean} True if door is on the viewed wall
+     */
+    isDoorOnViewedWall(door, view) {
         switch (view) {
             case 'FRONT':
                 return door.wall === 'front';
             case 'LEFT':
-                return door.wall === 'left';
-            case 'RIGHT':
                 return door.wall === 'right';
+            case 'RIGHT':
+                return door.wall === 'left';
             default:
                 return false;
         }
@@ -70,7 +92,16 @@ class DoorRenderer {
         if (view === 'TOP') {
             this.renderDoorTopView(ctx, door, isSelected, isPending);
         } else {
-            this.renderDoorSideView(ctx, door, view, isSelected, isPending);
+            // Check if door is on the wall being viewed or perpendicular
+            const isOnViewedWall = this.isDoorOnViewedWall(door, view);
+
+            if (isOnViewedWall) {
+                // Door is on this wall - render the full door
+                this.renderDoorSideView(ctx, door, view, isSelected, isPending);
+            } else {
+                // Door is on perpendicular wall - render only the arc/clearance zone
+                this.renderDoorArcPerpendicularView(ctx, door, view, isSelected, isPending);
+            }
         }
     }
 
@@ -379,6 +410,123 @@ class DoorRenderer {
             width: bottomRight.x - topLeft.x,
             height: bottomRight.y - topLeft.y
         };
+    }
+
+    /**
+     * Render door arc/clearance zone in perpendicular view
+     * Shows the swing arc when viewing from a wall perpendicular to the door's wall
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     * @param {Door} door - Door to render
+     * @param {string} view - Current view
+     * @param {boolean} isSelected - Whether door is selected
+     * @param {boolean} isPending - Whether door is being placed
+     */
+    renderDoorArcPerpendicularView(ctx, door, view, isSelected = false, isPending = false) {
+        // Only render arc for inward-swinging doors
+        if (door.swingDirection !== 'inward') {
+            return;
+        }
+
+        const isBlocked = door.isBlocked && !isPending;
+        const swingDepth = door.dimensions.width; // Arc radius
+        const roomHeightDim = this.room.dimensions.height;
+
+        let arcRoomX, arcRoomY, arcRoomWidth, arcRoomHeight;
+
+        // Calculate the arc zone based on which wall the door is on and which view we're in
+        if (view === 'FRONT') {
+            // FRONT view shows X-Z plane
+            if (door.wall === 'left') {
+                // Door on LEFT wall (X=0), swings into room (+X direction)
+                arcRoomX = 0;
+                arcRoomWidth = swingDepth;
+                arcRoomY = roomHeightDim - door.dimensions.height;
+                arcRoomHeight = door.dimensions.height;
+            } else if (door.wall === 'right') {
+                // Door on RIGHT wall (X=width), swings into room (-X direction)
+                arcRoomX = this.room.dimensions.width - swingDepth;
+                arcRoomWidth = swingDepth;
+                arcRoomY = roomHeightDim - door.dimensions.height;
+                arcRoomHeight = door.dimensions.height;
+            } else {
+                return; // Door not on perpendicular wall for this view
+            }
+        } else if (view === 'LEFT') {
+            // LEFT view shows Y-Z plane (viewing RIGHT wall)
+            const roomLength = this.room.dimensions.length;
+            if (door.wall === 'front') {
+                // Door on FRONT wall (Y=0), swings into room (+Y direction)
+                // Appears on the LEFT side of LEFT view
+                arcRoomX = 0;
+                arcRoomWidth = swingDepth;
+                arcRoomY = roomHeightDim - door.dimensions.height;
+                arcRoomHeight = door.dimensions.height;
+            } else if (door.wall === 'back') {
+                // Door on BACK wall (Y=room.length), swings into room (-Y direction)
+                // Appears on the RIGHT side of LEFT view
+                arcRoomX = roomLength - swingDepth;
+                arcRoomWidth = swingDepth;
+                arcRoomY = roomHeightDim - door.dimensions.height;
+                arcRoomHeight = door.dimensions.height;
+            } else {
+                return; // Door not on perpendicular wall for this view
+            }
+        } else if (view === 'RIGHT') {
+            // RIGHT view shows Y-Z plane (viewing LEFT wall) - MIRRORED
+            // Coordinates are flipped: x = roomLength - y - width
+            const roomLength = this.room.dimensions.length;
+            if (door.wall === 'front') {
+                // Door on FRONT wall (Y=0), swings into room (+Y direction)
+                // In mirrored RIGHT view, Y=0 appears on the RIGHT side
+                arcRoomX = roomLength - swingDepth;
+                arcRoomWidth = swingDepth;
+                arcRoomY = roomHeightDim - door.dimensions.height;
+                arcRoomHeight = door.dimensions.height;
+            } else if (door.wall === 'back') {
+                // Door on BACK wall (Y=room.length), swings into room (-Y direction)
+                // In mirrored RIGHT view, Y=room.length appears on the LEFT side
+                arcRoomX = 0;
+                arcRoomWidth = swingDepth;
+                arcRoomY = roomHeightDim - door.dimensions.height;
+                arcRoomHeight = door.dimensions.height;
+            } else {
+                return; // Door not on perpendicular wall for this view
+            }
+        } else {
+            return;
+        }
+
+        // Convert to canvas coordinates
+        const topLeft = this.viewport.toCanvasCoords(arcRoomX, arcRoomY);
+        const bottomRight = this.viewport.toCanvasCoords(
+            arcRoomX + arcRoomWidth,
+            arcRoomY + arcRoomHeight
+        );
+
+        const canvasX = topLeft.x;
+        const canvasY = topLeft.y;
+        const canvasWidth = bottomRight.x - topLeft.x;
+        const canvasHeight = bottomRight.y - topLeft.y;
+
+        // Save context
+        ctx.save();
+
+        // Draw semi-transparent swing zone
+        ctx.fillStyle = isBlocked ? 'rgba(255, 68, 68, 0.15)' : 'rgba(91, 155, 213, 0.1)';
+        ctx.fillRect(canvasX, canvasY, canvasWidth, canvasHeight);
+
+        // Draw swing zone border
+        ctx.strokeStyle = isBlocked ? 'rgba(255, 68, 68, 0.5)' : (isSelected ? '#5B9BD5' : 'rgba(91, 155, 213, 0.4)');
+        ctx.lineWidth = isSelected ? 2 : 1;
+        if (isPending) {
+            ctx.setLineDash([5, 5]);
+        } else {
+            ctx.setLineDash([3, 3]);
+        }
+        ctx.strokeRect(canvasX, canvasY, canvasWidth, canvasHeight);
+
+        // Restore context
+        ctx.restore();
     }
 
     /**

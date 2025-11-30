@@ -23,7 +23,8 @@
             <section class="panel-section">
                 <h2>Controls</h2>
                 <button id="roomSetupBtn" class="btn-block">Room Setup</button>
-                <button id="addObjectBtn" class="btn-block">Add Object</button>
+                <button id="addCustomObjectBtn" class="btn-block">Add Custom Object</button>
+                <button id="addPresetObjectBtn" class="btn-block">Add Precreated Object</button>
                 <button id="addWindowBtn" class="btn-block">Add Window</button>
                 <button id="addDoorBtn" class="btn-block">Add Door</button>
                 <button id="exportBtn" class="btn-block">Export View</button>
@@ -147,10 +148,10 @@
         </div>
     </div>
 
-    <!-- Object Creation Modal -->
+    <!-- Custom Object Creation Modal -->
     <div id="objectModal" class="modal">
         <div class="modal-content">
-            <h2>Create Object</h2>
+            <h2>Create Custom Object</h2>
             <form id="objectForm">
                 <div class="form-group">
                     <label for="objectName">Name:</label>
@@ -177,6 +178,19 @@
                     <button type="submit" class="btn-primary">Create & Place</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Preset Object Selection Modal -->
+    <div id="presetObjectModal" class="modal">
+        <div class="modal-content modal-large">
+            <h2>Select Precreated Object</h2>
+            <div id="presetObjectCategories" class="preset-categories">
+                <!-- Categories will be dynamically populated -->
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" id="cancelPresetObjectBtn">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -553,6 +567,9 @@
     <script src="js/utils/helpers.js"></script>
     <script src="js/utils/geometry.js"></script>
     <script src="js/utils/drawing.js"></script>
+
+    <!-- Data -->
+    <script src="js/data/PresetObjects.js"></script>
 
     <!-- Core -->
     <script src="js/core/eventBus.js"></script>

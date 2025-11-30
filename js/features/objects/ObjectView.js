@@ -9,8 +9,14 @@ class ObjectView {
         // Get DOM elements for create modal
         this.modal = document.getElementById('objectModal');
         this.form = document.getElementById('objectForm');
-        this.addBtn = document.getElementById('addObjectBtn');
+        this.addCustomBtn = document.getElementById('addCustomObjectBtn');
+        this.addPresetBtn = document.getElementById('addPresetObjectBtn');
         this.cancelBtn = document.getElementById('cancelObjectBtn');
+
+        // Get DOM elements for preset object modal
+        this.presetModal = document.getElementById('presetObjectModal');
+        this.presetCategoriesContainer = document.getElementById('presetObjectCategories');
+        this.cancelPresetBtn = document.getElementById('cancelPresetObjectBtn');
 
         this.nameInput = document.getElementById('objectName');
         this.widthInput = document.getElementById('objectWidth');
@@ -50,19 +56,29 @@ class ObjectView {
      * Set up event listeners
      */
     setupEventListeners() {
-        // Open modal
-        this.addBtn.addEventListener('click', () => this.showModal());
+        // Open custom object modal
+        this.addCustomBtn.addEventListener('click', () => this.showModal());
 
-        // Cancel button
+        // Open preset object modal
+        this.addPresetBtn.addEventListener('click', () => this.showPresetModal());
+
+        // Cancel buttons
         this.cancelBtn.addEventListener('click', () => this.hideModal());
+        this.cancelPresetBtn.addEventListener('click', () => this.hidePresetModal());
 
         // Form submission
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
 
-        // Close modal on background click
+        // Close modals on background click
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) {
                 this.hideModal();
+            }
+        });
+
+        this.presetModal.addEventListener('click', (e) => {
+            if (e.target === this.presetModal) {
+                this.hidePresetModal();
             }
         });
 
@@ -71,6 +87,9 @@ class ObjectView {
             if (e.key === 'Escape') {
                 if (this.modal.classList.contains('active')) {
                     this.hideModal();
+                }
+                if (this.presetModal.classList.contains('active')) {
+                    this.hidePresetModal();
                 }
                 if (this.editModal.classList.contains('active')) {
                     this.hideEditModal();
@@ -220,14 +239,40 @@ class ObjectView {
 
         // Convert from cm to meters for display
         this.editNameInput.value = object.name;
-        this.editWidthInput.value = (object.dimensions.width / 100).toFixed(2);
-        this.editLengthInput.value = (object.dimensions.length / 100).toFixed(2);
-        this.editHeightInput.value = (object.dimensions.height / 100).toFixed(2);
         this.editColorInput.value = object.color;
         this.editPosXInput.value = (object.position.x / 100).toFixed(2);
         this.editPosYInput.value = (object.position.y / 100).toFixed(2);
         this.editPosZInput.value = (object.position.z / 100).toFixed(2);
         this.editCollisionInput.checked = object.collisionEnabled;
+
+        // Handle dimensions based on whether object is preset
+        if (object.isPreset) {
+            // Make dimension inputs read-only for preset objects
+            this.editWidthInput.value = (object.dimensions.width / 100).toFixed(2);
+            this.editLengthInput.value = (object.dimensions.length / 100).toFixed(2);
+            this.editHeightInput.value = (object.dimensions.height / 100).toFixed(2);
+
+            this.editWidthInput.setAttribute('readonly', 'true');
+            this.editLengthInput.setAttribute('readonly', 'true');
+            this.editHeightInput.setAttribute('readonly', 'true');
+
+            this.editWidthInput.classList.add('dimension-readonly');
+            this.editLengthInput.classList.add('dimension-readonly');
+            this.editHeightInput.classList.add('dimension-readonly');
+        } else {
+            // Make dimension inputs editable for custom objects
+            this.editWidthInput.value = (object.dimensions.width / 100).toFixed(2);
+            this.editLengthInput.value = (object.dimensions.length / 100).toFixed(2);
+            this.editHeightInput.value = (object.dimensions.height / 100).toFixed(2);
+
+            this.editWidthInput.removeAttribute('readonly');
+            this.editLengthInput.removeAttribute('readonly');
+            this.editHeightInput.removeAttribute('readonly');
+
+            this.editWidthInput.classList.remove('dimension-readonly');
+            this.editLengthInput.classList.remove('dimension-readonly');
+            this.editHeightInput.classList.remove('dimension-readonly');
+        }
 
         this.editModal.classList.add('active');
         this.editNameInput.focus();
@@ -253,19 +298,30 @@ class ObjectView {
             return;
         }
 
-        // Convert from meters to cm (internal storage)
+        // Get the object to check if it's a preset
+        const object = this.objectManager.getObjectById(this.editingObjectId);
+        if (!object) {
+            console.error('Object not found');
+            return;
+        }
+
+        // Build updated data object
         const updatedData = {
             id: this.editingObjectId,
             name: this.editNameInput.value.trim(),
-            width: parseFloat(this.editWidthInput.value) * 100,
-            length: parseFloat(this.editLengthInput.value) * 100,
-            height: parseFloat(this.editHeightInput.value) * 100,
             color: this.editColorInput.value,
             posX: parseFloat(this.editPosXInput.value) * 100,
             posY: parseFloat(this.editPosYInput.value) * 100,
             posZ: parseFloat(this.editPosZInput.value) * 100,
             collisionEnabled: this.editCollisionInput.checked
         };
+
+        // Only include dimensions for custom objects (not preset objects)
+        if (!object.isPreset) {
+            updatedData.width = parseFloat(this.editWidthInput.value) * 100;
+            updatedData.length = parseFloat(this.editLengthInput.value) * 100;
+            updatedData.height = parseFloat(this.editHeightInput.value) * 100;
+        }
 
         // Validate
         if (!updatedData.name) {
@@ -277,5 +333,95 @@ class ObjectView {
         this.eventBus.emit('object:update-requested', updatedData);
 
         this.hideEditModal();
+    }
+
+    /**
+     * Show the preset object selection modal
+     */
+    showPresetModal() {
+        this.populatePresetObjects();
+        this.presetModal.classList.add('active');
+    }
+
+    /**
+     * Hide the preset object selection modal
+     */
+    hidePresetModal() {
+        this.presetModal.classList.remove('active');
+    }
+
+    /**
+     * Populate the preset object selection modal with categories and items
+     */
+    populatePresetObjects() {
+        // Clear existing content
+        this.presetCategoriesContainer.innerHTML = '';
+
+        // Get all categories
+        const categories = getPresetCategories();
+
+        // Create category sections
+        for (const categoryKey of categories) {
+            const category = getPresetCategory(categoryKey);
+            if (!category) continue;
+
+            // Create category container
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'preset-category';
+
+            // Create category header
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'preset-category-header';
+            headerDiv.textContent = category.categoryName;
+            categoryDiv.appendChild(headerDiv);
+
+            // Create items container
+            const itemsDiv = document.createElement('div');
+            itemsDiv.className = 'preset-items';
+
+            // Create item cards
+            for (const item of category.items) {
+                const itemCard = document.createElement('div');
+                itemCard.className = 'preset-item';
+                itemCard.dataset.presetId = item.id;
+
+                // Item name
+                const nameSpan = document.createElement('div');
+                nameSpan.className = 'preset-item-name';
+                nameSpan.textContent = item.name;
+                itemCard.appendChild(nameSpan);
+
+                // Item dimensions (convert from cm to m for display)
+                const dimensionsSpan = document.createElement('div');
+                dimensionsSpan.className = 'preset-item-dimensions';
+                dimensionsSpan.textContent = `${(item.width / 100).toFixed(2)}m × ${(item.length / 100).toFixed(2)}m × ${(item.height / 100).toFixed(2)}m`;
+                itemCard.appendChild(dimensionsSpan);
+
+                // Color preview
+                const colorPreview = document.createElement('div');
+                colorPreview.className = 'preset-item-color-preview';
+                colorPreview.style.backgroundColor = item.color;
+                itemCard.appendChild(colorPreview);
+
+                // Click handler
+                itemCard.addEventListener('click', () => {
+                    this.handlePresetObjectSelect(item.id);
+                });
+
+                itemsDiv.appendChild(itemCard);
+            }
+
+            categoryDiv.appendChild(itemsDiv);
+            this.presetCategoriesContainer.appendChild(categoryDiv);
+        }
+    }
+
+    /**
+     * Handle preset object selection
+     * @param {string} presetId - ID of the selected preset object
+     */
+    handlePresetObjectSelect(presetId) {
+        this.hidePresetModal();
+        this.eventBus.emit('preset-object:create-requested', { presetId });
     }
 }

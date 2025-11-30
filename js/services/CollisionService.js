@@ -477,6 +477,59 @@ class CollisionService {
                     return true;
                 }
             }
+
+            // REVERSE CHECK: Check if any point along the arc is inside the object
+            // This catches cases where the arc sweeps through the object
+            // Sample points along the arc
+            const arcSamples = 20; // Sample 20 points along the arc
+            for (let i = 0; i <= arcSamples; i++) {
+                const t = i / arcSamples;
+                const angle = arc.startAngle + (arc.endAngle - arc.startAngle) * t;
+
+                // Handle wrap-around for angles
+                let actualAngle = angle;
+                if (arc.endAngle < arc.startAngle) {
+                    // Wrap-around case
+                    actualAngle = arc.startAngle + ((arc.endAngle + 2 * Math.PI) - arc.startAngle) * t;
+                    if (actualAngle > 2 * Math.PI) actualAngle -= 2 * Math.PI;
+                }
+
+                // Calculate point on arc at this angle
+                const arcX = arc.centerX + arc.radius * Math.cos(actualAngle);
+                const arcY = arc.centerY + arc.radius * Math.sin(actualAngle);
+
+                // Check if this arc point is inside the object's bounding box
+                if (arcX >= bounds.x && arcX <= bounds.x + bounds.width &&
+                    arcY >= bounds.y && arcY <= bounds.y + bounds.height) {
+                    return true;
+                }
+            }
+
+            // Also check points along the arc radius (from center to edge)
+            // This catches objects placed near the door hinge
+            const radiusSamples = 10;
+            const angleSamples = 5;
+            for (let a = 0; a <= angleSamples; a++) {
+                const t1 = a / angleSamples;
+                let angle = arc.startAngle + (arc.endAngle - arc.startAngle) * t1;
+
+                if (arc.endAngle < arc.startAngle) {
+                    angle = arc.startAngle + ((arc.endAngle + 2 * Math.PI) - arc.startAngle) * t1;
+                    if (angle > 2 * Math.PI) angle -= 2 * Math.PI;
+                }
+
+                for (let r = 0; r <= radiusSamples; r++) {
+                    const t2 = r / radiusSamples;
+                    const radius = arc.radius * t2;
+                    const arcX = arc.centerX + radius * Math.cos(angle);
+                    const arcY = arc.centerY + radius * Math.sin(angle);
+
+                    if (arcX >= bounds.x && arcX <= bounds.x + bounds.width &&
+                        arcY >= bounds.y && arcY <= bounds.y + bounds.height) {
+                        return true;
+                    }
+                }
+            }
         }
 
         return false;

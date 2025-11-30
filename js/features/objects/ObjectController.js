@@ -30,8 +30,9 @@ class ObjectController {
     setupEventListeners() {
         const canvas = this.viewport.canvas;
 
-        // Listen to object creation request
+        // Listen to object creation requests
         this.eventBus.on('object:create-requested', (data) => this.handleCreateRequest(data));
+        this.eventBus.on('preset-object:create-requested', (data) => this.handlePresetCreateRequest(data));
 
         // Canvas mouse events
         canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
@@ -91,6 +92,56 @@ class ObjectController {
 
         // Trigger render to show preview
         this.eventBus.emit('render-requested');
+    }
+
+    /**
+     * Handle preset object creation request
+     * @param {Object} data - Data containing presetId
+     */
+    handlePresetCreateRequest(data) {
+        // Get preset object data
+        const presetData = getPresetObjectById(data.presetId);
+        if (!presetData) {
+            console.error('Preset object not found:', data.presetId);
+            return;
+        }
+
+        // Generate auto-numbered name
+        const baseName = presetData.name;
+        const autoNumberedName = this.generateAutoNumberedName(baseName, data.presetId);
+
+        // Create object with preset data
+        const obj = new PlaceableObject(
+            autoNumberedName,
+            presetData.width,
+            presetData.length,
+            presetData.height,
+            presetData.color,
+            true, // isPreset = true
+            data.presetId // presetId
+        );
+
+        this.state.pendingObject = obj;
+        this.state.mode = 'CREATING';
+        this.objectView.updateModeIndicator('CREATING');
+
+        // Trigger render to show preview
+        this.eventBus.emit('render-requested');
+    }
+
+    /**
+     * Generate auto-numbered name for preset objects
+     * @param {string} baseName - Base name (e.g., "Queen Bed")
+     * @param {string} presetId - Preset ID
+     * @returns {string} Auto-numbered name (e.g., "Queen Bed 1")
+     */
+    generateAutoNumberedName(baseName, presetId) {
+        // Count how many objects of this preset type already exist
+        const allObjects = this.objectManager.getAllObjects();
+        const sameTypeObjects = allObjects.filter(obj => obj.presetId === presetId);
+        const count = sameTypeObjects.length + 1;
+
+        return `${baseName} ${count}`;
     }
 
     /**
@@ -655,14 +706,22 @@ class ObjectController {
 
         // Update object properties
         obj.name = data.name;
-        obj.dimensions.width = data.width;
-        obj.dimensions.length = data.length;
-        obj.dimensions.height = data.height;
         obj.color = data.color;
         obj.position.x = data.posX;
         obj.position.y = data.posY;
         obj.position.z = data.posZ;
         obj.collisionEnabled = data.collisionEnabled;
+
+        // Only update dimensions if provided (custom objects only, not preset objects)
+        if (data.width !== undefined) {
+            obj.dimensions.width = data.width;
+        }
+        if (data.length !== undefined) {
+            obj.dimensions.length = data.length;
+        }
+        if (data.height !== undefined) {
+            obj.dimensions.height = data.height;
+        }
 
         // Check if new configuration is valid
         const allObjects = this.objectManager.getAllObjects();

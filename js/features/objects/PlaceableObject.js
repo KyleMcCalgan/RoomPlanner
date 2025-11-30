@@ -2,7 +2,7 @@
  * PlaceableObject - Data model for objects that can be placed in the room
  */
 class PlaceableObject {
-    constructor(name, width, length, height, color) {
+    constructor(name, width, length, height, color, isPreset = false, presetId = null) {
         this.id = generateId();
         this.name = name;
         this.dimensions = {
@@ -20,6 +20,8 @@ class PlaceableObject {
         this.collisionEnabled = true;
         this.visible = true;
         this.creationOrder = 0;
+        this.isPreset = isPreset; // True if this is a precreated object
+        this.presetId = presetId; // ID of the preset object (e.g., 'queen_bed')
     }
 
     /**

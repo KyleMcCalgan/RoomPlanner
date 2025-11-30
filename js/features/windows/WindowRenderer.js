@@ -52,9 +52,11 @@ class WindowRenderer {
             case 'FRONT':
                 return window.wall === 'front';
             case 'LEFT':
-                return window.wall === 'left';
-            case 'RIGHT':
+                // LEFT view means looking FROM left TOWARDS right - so we see the RIGHT wall
                 return window.wall === 'right';
+            case 'RIGHT':
+                // RIGHT view means looking FROM right TOWARDS left - so we see the LEFT wall
+                return window.wall === 'left';
             default:
                 return false;
         }

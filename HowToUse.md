@@ -8,14 +8,19 @@ A web-based space planning application that allows users to check if items will 
 
 ## Current Implementation Status
 
-**Last Updated:** November 2025 (Post-Phase 7.1-7.4)
-**Current Status:** Windows Complete, Ready for Doors (Phase 7.5+)
-**Completed Phases:** 1-6, 7.1-7.4 (Foundation, Objects, Views, Windows)
-**Remaining Phases:** 7.5-7.10 (Doors), 8-10 (Statistics, Export, Polish)
+**Last Updated:** November 2025 (Post-Phase 7.10 + Precreated Objects)
+**Current Status:** Doors Complete with Arc Visualization, Precreated Objects Implemented
+**Completed Phases:** 1-7.10 (Foundation, Objects, Views, Windows, Doors), Preset Objects
+**Remaining Phases:** 8-10 (Statistics refinements, Export, Polish)
 
 ### ✅ What's Working Now:
 - ✓ Room creation and visualization with grid pattern
-- ✓ Object creation, placement, movement, rotation, deletion
+- ✓ **Custom & Precreated Object Creation**
+  - Custom objects with user-defined dimensions
+  - **70+ precreated household objects in 8 categories**
+  - Auto-numbered naming for preset objects
+  - Read-only dimensions for preset objects (name & color editable)
+- ✓ Object placement, movement, rotation, deletion
 - ✓ Collision detection with room boundaries and other objects
 - ✓ Per-object collision toggle for intentional overlapping/stacking
 - ✓ **Intelligent stacking system based on creation order**
@@ -36,6 +41,15 @@ A web-based space planning application that allows users to check if items will 
   - Top view indicators (faint lines on walls)
   - Statistics (window count and total area)
   - Silent collision detection (prevents overlaps)
+- ✓ **Doors system with complete arc visualization (Phases 7.5-7.10)**
+  - Door creation with swing direction & hinge position
+  - Swing arc visualization in TOP view
+  - **Arc clearance zones in perpendicular side views**
+  - Enhanced collision detection (80+ sample points)
+  - Blocked door indicators (red coloring)
+  - Door list in right panel
+  - Statistics (door count, blocked doors)
+  - Correct view rendering (LEFT/RIGHT view fix)
 
 ### 🔄 Key Design Changes from Original Spec:
 1. **Dark Theme:** Changed from light to dark color scheme for better visibility
@@ -47,19 +61,29 @@ A web-based space planning application that allows users to check if items will 
 7. **Canvas Size:** Fixed 800x600 canvas with maximized viewport usage
 8. **Creation-Order Stacking:** Objects stack based on creation order - first created = bottom of stack
 9. **Bilateral Collision Toggle:** Stacking occurs when EITHER object has collision disabled
+10. **Preset Objects System:** Scalable catalog of common household items with locked dimensions
+11. **Enhanced Door Arcs:** Swing arcs visible in perpendicular views for easier placement
 
 ### 📋 Still To Implement:
-- Phase 7.5-7.10: Doors feature with swing arc visualization
 - Phase 8: Statistics refinements and additional metrics
 - Phase 9: PNG export functionality
 - Phase 10: Final polish and testing
 
-### 💡 Potential Future Enhancements (Windows):
+### 💡 Potential Future Enhancements:
+**Windows:**
 - Arrow key nudging for fine positioning
 - Snap to grid/intervals along walls
 - Alignment tools (align tops/bottoms, distribute evenly)
 - Window size presets (small/medium/large)
 - Multi-select windows (Ctrl+click)
+
+**Precreated Objects:**
+- Load from external API/database
+- User-customizable object library
+- Import/export custom object definitions
+- Object thumbnails/preview images
+- Tags and search functionality
+- Community-shared object library
 
 ---
 
@@ -74,8 +98,12 @@ A web-based space planning application that allows users to check if items will 
 **User Flow:**
 
 1. **Setup Phase:** Define room dimensions
-2. **Creation Phase:** Create object with dimensions, name, color → click canvas to place
+2. **Creation Phase:**
+   - **Custom Objects:** Create object with user-defined dimensions, name, color → click canvas to place
+   - **Precreated Objects:** Browse categorized catalog → select preset object → click canvas to place
 3. **Editing Phase:** Move objects, rotate, adjust properties, toggle collision
+   - Custom objects: All properties editable
+   - Preset objects: Name, color, position editable (dimensions locked)
 4. **Analysis Phase:** View statistics, switch between views, export
 
 ---
@@ -94,6 +122,9 @@ space-planner/
 │   └── modal.css                       # Dialog/modal styling
 │
 ├── js/
+│   ├── data/
+│   │   └── PresetObjects.js            # Catalog of precreated objects (API-ready)
+│   │
 │   ├── core/
 │   │   ├── app.js                      # Application entry point & state
 │   │   ├── viewport.js                 # Canvas management & scaling
@@ -146,6 +177,7 @@ space-planner/
 
 **Rationale:**
 
+- **`data/`** - Static data catalogs (scalable, API-ready)
 - **`core/`** - Application infrastructure (bootstrap, events, viewport)
 - **`features/`** - Each major domain (Room, Objects, Windows, Doors, Views) contains all related code
 - **`services/`** - Shared business logic used by multiple features
@@ -154,14 +186,15 @@ space-planner/
 - **Clear naming** (Controller/View/Renderer/Model) shows responsibility
 
 **Currently Implemented Files:**
+- ✓ **PresetObjects.js** (70+ household objects in 8 categories)
 - ✓ All core/ files
 - ✓ All features/room/ files
-- ✓ All features/objects/ files
+- ✓ All features/objects/ files (with preset object support)
 - ✓ All features/views/ files
-- ✓ CollisionService.js (with window collision detection)
-- ✓ StatisticsService.js
 - ✓ **All features/windows/ files (Phases 7.1-7.4 COMPLETE)**
-- ⏳ Doors/ features (Phase 7.5-7.10)
+- ✓ **All features/doors/ files (Phases 7.5-7.10 COMPLETE)**
+- ✓ CollisionService.js (with enhanced door arc collision - 80+ sample points)
+- ✓ StatisticsService.js
 - ⏳ ExportService.js (Phase 9)
 
 ---
@@ -304,7 +337,7 @@ class Room {
 
 ```javascript
 class PlaceableObject {
-  constructor(name, width, length, height, color) {
+  constructor(name, width, length, height, color, isPreset = false, presetId = null) {
     this.id = generateId();
     this.name = name;
     this.dimensions = { width, length, height };
@@ -313,8 +346,10 @@ class PlaceableObject {
     this.color = color;
     this.collisionEnabled = true;
     this.creationOrder = 0;
+    this.isPreset = isPreset; // True if precreated object
+    this.presetId = presetId; // ID of preset (e.g., 'queen_bed')
   }
-  
+
   move(x, y, z) { ... }
   rotate(degrees) { ... }
   isAt(x, y, z) { ... }
@@ -322,26 +357,52 @@ class PlaceableObject {
 }
 ```
 
+**`PresetObjects.js` (Data Catalog - NEW)**
+
+```javascript
+const PRESET_OBJECTS = {
+  bedroom: {
+    categoryName: "Bedroom",
+    items: [
+      { id: "queen_bed", name: "Queen Bed", width: 160, length: 200, height: 50, color: "#4A90E2" },
+      { id: "bedside_table", name: "Bedside Table", width: 40, length: 40, height: 50, color: "#8B4513" },
+      // ... more items
+    ]
+  },
+  living_room: { ... },
+  dining: { ... },
+  // 8 categories total with 70+ objects
+}
+```
+
+**Key Features:**
+- **Scalable Structure:** Easy to add new objects/categories
+- **API-Ready:** Can be replaced with `fetch()` call
+- **Helper Functions:** `getPresetCategories()`, `getPresetObjectById()`, `searchPresetObjects()`
+
 **`ObjectManager.js` (State Management)**
 
-- Store all objects
+- Store all objects (custom & preset)
 - CRUD operations
 - Track selected object
 - Handle object ordering
 
 **`ObjectController.js` (Interactions)**
 
-- Creation flow (modal → placement mode)
+- **Custom object creation flow** (modal → placement mode)
+- **Preset object creation flow** (catalog selection → auto-naming → placement mode)
+- Auto-numbered naming: "Queen Bed 1", "Queen Bed 2", etc.
 - Selection (click detection)
 - Movement (drag handling)
 - Rotation (keyboard)
 - Deletion
-- Property editing
+- Property editing (dimension-aware for presets)
 
 **`ObjectView.js` (UI)**
 
-- Create object modal (name, dimensions, color)
-- Edit object modal (same fields)
+- **Custom object modal** (name, dimensions, color)
+- **Preset object modal** (categorized grid with 70+ objects)
+- **Edit object modal** (dimension fields locked for presets)
 - Right-click context menu
 - Color picker
 - Object list/inspector
@@ -422,24 +483,70 @@ class Window {
 
 ```javascript
 class Door {
-  constructor(wall, position, width, height, swingDirection) {
+  constructor(wall, position, width, height, swingDirection, hingePosition) {
     this.id = generateId();
-    this.wall = wall;
-    this.position = position;
-    this.width = width;
-    this.height = height;
-    this.swingDirection = swingDirection; // "left", "right"
+    this.wall = wall; // 'front', 'back', 'left', 'right'
+    this.position = position; // Position along wall (cm)
+    this.dimensions = { width, height };
+    this.swingDirection = swingDirection; // 'inward', 'outward'
+    this.hingePosition = hingePosition; // 'left', 'right'
+    this.isBlocked = false; // Updated by collision detection
   }
-  
-  getSwingArc() { ... } // for top-down visualization
+
+  getSwingArc(room) { ... } // Calculate arc center, radius, angles
+  isPointInSwingArc(x, y, room) { ... } // Check if point is in swing zone
 }
 ```
 
-**`DoorController.js`, `DoorView.js`, `DoorRenderer.js`**
+**`DoorController.js` (Interactions)**
 
-- Similar pattern to Windows
-- Door rendering shows swing arc in top-down view
-- Cutout in side views
+- Creation flow (modal → placement → click to place)
+- Selection and movement along walls
+- Deletion and duplication
+- Property editing (wall, dimensions, swing direction, hinge position)
+- **View-aware wall detection** (LEFT/RIGHT view coordinate fix)
+
+**`DoorView.js` (UI)**
+
+- Door creation modal (wall, dimensions, swing direction, hinge position)
+- Edit door modal (all properties + position along wall)
+- Right-click context menu (Edit, Duplicate, Delete)
+- Default dimensions: width=90cm, height=210cm
+
+**`DoorListView.js` (UI - Right Panel)**
+
+- Display all doors in list format
+- Show door number, dimensions, wall location, blocked status
+- Red indicator for blocked doors
+- Click to select door
+
+**`DoorRenderer.js` (Rendering) - ENHANCED**
+
+**TOP View:**
+- Door line on wall (brown color: #C19A6B)
+- **Swing arc visualization** (quarter circle)
+- Blue fill for normal doors, red fill for blocked doors
+- Arc shows clearance zone needed for door swing
+
+**SIDE Views (FRONT/LEFT/RIGHT):**
+- **Door on current wall:** Full door rectangle with brown fill
+- **Door on perpendicular walls:** Semi-transparent clearance zone showing swing depth
+  - Example: Door on FRONT wall → visible in LEFT and RIGHT views as blue zone
+- **Enhanced view rendering logic:**
+  - LEFT view: See RIGHT wall (doors on right show as full door, doors on front/back show as arcs)
+  - RIGHT view: See LEFT wall (mirrored coordinate system)
+  - FRONT view: See FRONT wall (doors on front show as full door, doors on left/right show as arcs)
+
+**Coordinate System Fix:**
+- **LEFT view:** Shows right wall, no mirroring
+- **RIGHT view:** Shows left wall, X coordinates mirrored (`x = roomLength - y - width`)
+- This ensures doors appear on the correct side in all views
+
+**Key Implementation Details:**
+1. **Perpendicular Arc Rendering:** When viewing from a perpendicular wall, doors show their swing clearance as a semi-transparent zone
+2. **Inward Doors Only:** Only inward-swinging doors show arcs (outward doors swing outside room)
+3. **Color Coding:** Normal = blue (#5B9BD5), Blocked = red (#FF4444)
+4. **Dashed Borders:** Arcs use dashed borders to distinguish from full doors
 
 ---
 
@@ -467,10 +574,23 @@ class Door {
 class CollisionService {
   checkBoundaryCollision(object, room) { ... }
   checkObjectCollision(object1, object2) { ... }
+  checkWindowCollision(window1, window2) { ... }
+  checkWindowDoorCollision(window, door) { ... }
+  checkDoorCollision(door1, door2) { ... }
+  checkDoorSwingArcCollision(door, allObjects, room) { ... } // ENHANCED
+  updateDoorBlockedStatus(allDoors, allObjects, room) { ... }
   canPlace(object, allObjects, room) { ... }
   getStackingOrder(objects) { ... } // by creation order
 }
 ```
+
+**Enhanced Door Arc Collision Detection:**
+- **Bidirectional checking** prevents missed collisions
+- Object → Arc: Sample 20 points on object edges, check if in arc
+- Arc → Object: Sample 20 points on arc edge, check if inside object bounds
+- Arc Interior: Sample 50 points in radial grid within arc sector
+- **Total: 80+ sample points per object** for thorough detection
+- Handles wrap-around angles correctly for all hinge positions
 
 ### StatisticsService
 
@@ -1195,7 +1315,7 @@ After each phase:
 
 ### ✅ Completed:
 - ✅ Room can be defined with custom dimensions
-- ✅ Objects can be created with all properties
+- ✅ **Custom & Precreated Objects** can be created
 - ✅ Click-to-place workflow works smoothly
 - ✅ Objects can be selected, moved, rotated, deleted
 - ✅ Right-click context menu allows property editing
@@ -1205,11 +1325,15 @@ After each phase:
 - ✅ Objects can be stacked (bilateral collision toggle)
 - ✅ Stacking hierarchy based on creation order
 - ✅ Statistics update in real-time
+- ✅ **Windows fully implemented with resize handles**
+- ✅ **Doors fully implemented with arc visualization**
+- ✅ **Enhanced collision detection for door swing arcs**
 - ✅ Code is organized and maintainable
 
 ### ⏳ Remaining:
-- ⏳ Windows and doors render in appropriate views
 - ⏳ Canvas exports to PNG successfully
+- ⏳ Keyboard shortcuts for creating objects/windows/doors
+- ⏳ Undo/redo functionality
 - ⏳ UI is polished and responsive
 - ⏳ Final testing and edge case handling
 
@@ -1224,6 +1348,34 @@ After each phase:
 ---
 
 ## Recent Updates & Bug Fixes
+
+### Precreated Objects Feature (November 2025)
+- ✅ Added 70+ household objects in 8 categories
+- ✅ Scalable catalog structure in `PresetObjects.js`
+- ✅ Auto-numbered naming system (e.g., "Queen Bed 1", "Queen Bed 2")
+- ✅ Read-only dimensions for preset objects (editable name/color)
+- ✅ Categorized selection modal with visual cards
+- ✅ API-ready structure for future expansion
+
+### Door Arc Visualization Enhancement (November 2025)
+- ✅ Swing arcs now visible in perpendicular side views
+- ✅ Semi-transparent clearance zones show where doors swing
+- ✅ Fixed LEFT/RIGHT view rendering (coordinate mirroring)
+- ✅ Enhanced collision detection with 80+ sample points
+- ✅ Bidirectional checking (arc → object AND object → arc)
+
+### View Rendering Fix (November 2025)
+**Issue Fixed:** LEFT and RIGHT views were showing incorrect walls for doors and windows
+
+**Previous Behavior:**
+- LEFT view showed LEFT wall (incorrect)
+- RIGHT view showed RIGHT wall (incorrect)
+- Doors/windows appeared on wrong side in perpendicular views
+
+**Current Behavior:**
+- LEFT view shows RIGHT wall (you're looking FROM left TOWARDS right)
+- RIGHT view shows LEFT wall (mirrored coordinate system)
+- All features (doors, windows, objects) render on correct walls
 
 ### Phase 6 Completion (Multiple Views)
 - ✅ All four views (TOP, FRONT, LEFT, RIGHT) fully implemented
@@ -1255,15 +1407,238 @@ After each phase:
 ### Known Limitations
 - Object placement only allowed in TOP view (by design)
 - No undo/redo functionality yet
-- Windows and doors features not yet implemented
+- Export functionality not yet implemented
+- No keyboard shortcuts for creating objects/windows/doors
 
+---
 
+## Expanding the Preset Objects Catalog
 
-add the foor arc to the side views to make placing easier (if the door is on the right wall we should see the maximum arc front eh front view )
-add difference between custom objects and preCreated obejcts
-add keybinds to create object, custom object, window, door
-windows and doors should not overlap
-Further down the line I want undo redo functionality
-finsh export functionality
+The precreated objects system is designed to be **highly scalable** and **API-ready**. Here's how to expand it for future development:
+
+### Adding New Objects to Existing Categories
+
+**File:** `js/data/PresetObjects.js`
+
+1. Navigate to the desired category (e.g., `bedroom`, `living_room`, etc.)
+2. Add a new object to the `items` array:
+
+```javascript
+bedroom: {
+    categoryName: "Bedroom",
+    items: [
+        // Existing objects...
+        {
+            id: "super_king_bed",           // Unique ID (lowercase_snake_case)
+            name: "Super King Bed",         // Display name
+            width: 200,                     // Width in cm
+            length: 200,                    // Length in cm
+            height: 50,                     // Height in cm
+            color: "#4A90E2"                // Hex color code
+        }
+    ]
+}
+```
+
+**Rules:**
+- `id` must be unique across ALL categories
+- Dimensions are in **centimeters**
+- Use consistent naming conventions
+- Color should match category theme (optional)
+
+### Adding New Categories
+
+Add a new category object to `PRESET_OBJECTS`:
+
+```javascript
+const PRESET_OBJECTS = {
+    // Existing categories...
+
+    garage: {
+        categoryName: "Garage & Workshop",
+        items: [
+            {
+                id: "workbench",
+                name: "Workbench",
+                width: 180,
+                length: 60,
+                height: 90,
+                color: "#8B4513"
+            },
+            {
+                id: "tool_cabinet",
+                name: "Tool Cabinet",
+                width: 80,
+                length: 50,
+                height: 180,
+                color: "#696969"
+            }
+        ]
+    }
+};
+```
+
+**The UI will automatically:**
+- Create a new category section in the modal
+- Display all items with dimensions
+- Handle selection and placement
+
+### Replacing with API Data (Future Enhancement)
+
+To load objects from an external API or database:
+
+**1. Create an API service:**
+
+```javascript
+// js/services/PresetObjectService.js
+class PresetObjectService {
+    async fetchPresetObjects() {
+        try {
+            const response = await fetch('https://api.example.com/preset-objects');
+            const data = await response.json();
+            return data; // Should match PRESET_OBJECTS structure
+        } catch (error) {
+            console.error('Failed to load preset objects:', error);
+            return PRESET_OBJECTS; // Fallback to local data
+        }
+    }
+}
+```
+
+**2. Update PresetObjects.js to support dynamic loading:**
+
+```javascript
+// At the top of PresetObjects.js
+let PRESET_OBJECTS = {
+    // ... local fallback data
+};
+
+async function loadPresetObjects() {
+    const service = new PresetObjectService();
+    PRESET_OBJECTS = await service.fetchPresetObjects();
+}
+
+// Call during app initialization
+// await loadPresetObjects();
+```
+
+**3. Expected API Response Format:**
+
+```json
+{
+    "bedroom": {
+        "categoryName": "Bedroom",
+        "items": [
+            {
+                "id": "queen_bed",
+                "name": "Queen Bed",
+                "width": 160,
+                "length": 200,
+                "height": 50,
+                "color": "#4A90E2"
+            }
+        ]
+    }
+}
+```
+
+### Adding Object Metadata (Future)
+
+You can extend the object definition with additional metadata:
+
+```javascript
+{
+    id: "queen_bed",
+    name: "Queen Bed",
+    width: 160,
+    length: 200,
+    height: 50,
+    color: "#4A90E2",
+
+    // Future enhancements:
+    thumbnail: "/images/queen_bed.png",
+    description: "Standard queen-size bed",
+    tags: ["furniture", "bedroom", "sleeping"],
+    brand: "IKEA",
+    modelNumber: "MALM-160",
+    price: 299.99,
+    url: "https://example.com/queen-bed"
+}
+```
+
+### Best Practices
+
+1. **Consistent Naming:**
+   - IDs: `lowercase_snake_case`
+   - Names: `Title Case`
+   - Colors: Hex codes (`#RRGGBB`)
+
+2. **Realistic Dimensions:**
+   - Research actual furniture dimensions
+   - Round to nearest 5cm for consistency
+   - Height should include legs/clearance
+
+3. **Color Coordination:**
+   - Use category-consistent colors
+   - Bedroom: Blues (#4A90E2)
+   - Furniture: Browns (#8B4513, #A0522D)
+   - Appliances: Grays/Silver (#C0C0C0, #696969)
+
+4. **Category Organization:**
+   - Group by room type or function
+   - Keep categories focused (5-10 items ideal)
+   - Too many items? Split into subcategories
+
+5. **Testing:**
+   - Test each new object for proper placement
+   - Verify dimensions look realistic in room
+   - Check collision detection works correctly
+
+### Community/User-Contributed Objects (Future)
+
+To support user-contributed objects:
+
+1. Add import/export functionality
+2. Create JSON schema for validation
+3. Build object preview/approval system
+4. Implement object sharing via URLs or codes
+
+**Example Export Format:**
+
+```json
+{
+    "name": "My Custom Sofa",
+    "width": 220,
+    "length": 95,
+    "height": 85,
+    "color": "#A0522D",
+    "category": "living_room",
+    "author": "username",
+    "dateCreated": "2025-11-30"
+}
+```
+
+---
+
+### Future Development Roadmap
+
+**Short Term:**
+- ⏳ Add keyboard shortcuts for object creation
+- ⏳ Implement undo/redo functionality
+- ⏳ Complete PNG export functionality
+- ⏳ Prevent window/door overlaps
+
+**Medium Term:**
+- 🔮 Load preset objects from external API
+- 🔮 Object search and filtering
+- 🔮 Save/load room configurations
+- 🔮 Object thumbnails/previews
+
+**Long Term:**
+- 🔮 User-customizable object library
+- 🔮 Community-shared object marketplace
+- 🔮 3D view rendering
+- 🔮 Room templates library
+- 🔮 Multi-room floor plans
 
 
