@@ -94,14 +94,6 @@ const PRESET_OBJECTS = {
                 color: "#A0522D"
             },
             {
-                id: "l_shaped_sofa",
-                name: "L-Shaped Sofa",
-                width: 250,
-                length: 180,
-                height: 85,
-                color: "#A0522D"
-            },
-            {
                 id: "armchair",
                 name: "Armchair",
                 width: 85,

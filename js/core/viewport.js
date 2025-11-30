@@ -8,12 +8,12 @@ class Viewport {
         this.width = canvas.width;
         this.height = canvas.height;
 
-        // Padding for rulers and margins
+        // Padding for rulers, margins, and direction indicators
         this.padding = {
             top: 30,
             right: 20,
-            bottom: 30,
-            left: 30
+            bottom: 80,  // Increased for bottom arrow indicator
+            left: 120    // Increased for ruler + left arrow indicator
         };
 
         // Drawing area (excluding padding)

@@ -75,7 +75,8 @@ class SpacePlannerApp {
             this.collisionService,
             this.room,
             this.viewManager,
-            this.windowRenderer
+            this.windowRenderer,
+            this.doorManager  // Pass door manager for collision checking
         );
 
         // Update window renderer with controller reference
@@ -164,6 +165,9 @@ class SpacePlannerApp {
             this.render(data ? data.mouseEvent : null);
         });
         this.eventBus.on('view:changed', () => {
+            this.render();
+        });
+        this.eventBus.on('view:hovered', () => {
             this.render();
         });
 
@@ -366,6 +370,56 @@ class SpacePlannerApp {
                 return;
             }
 
+            // === CREATION SHORTCUTS (work without selection) ===
+
+            // O - Add Custom Object
+            if ((e.key === 'o' || e.key === 'O') && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                document.getElementById('addCustomObjectBtn').click();
+                return;
+            }
+
+            // P - Add Preset Object
+            if ((e.key === 'p' || e.key === 'P') && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                document.getElementById('addPresetObjectBtn').click();
+                return;
+            }
+
+            // W - Add Window
+            if ((e.key === 'w' || e.key === 'W') && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                document.getElementById('addWindowBtn').click();
+                return;
+            }
+
+            // B - Add Door (B for "Building element")
+            if ((e.key === 'b' || e.key === 'B') && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                document.getElementById('addDoorBtn').click();
+                return;
+            }
+
+            // === SELECTION SHORTCUTS ===
+
+            // A - Select All
+            if ((e.key === 'a' || e.key === 'A') && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                this.objectManager.selectAll();
+                this.eventBus.emit('object:selected');
+                return;
+            }
+
+            // E - Deselect All
+            if ((e.key === 'e' || e.key === 'E') && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                this.objectManager.deselectAll();
+                this.eventBus.emit('object:deselected');
+                return;
+            }
+
+            // === OBJECT ACTION SHORTCUTS (require selection) ===
+
             const selectedObjects = this.objectManager.getSelectedObjects();
             if (selectedObjects.length === 0) return;
 
@@ -394,22 +448,6 @@ class SpacePlannerApp {
                 this.objectController.recalculateAllZPositions();
                 this.eventBus.emit('object:updated');
                 this.render();
-                return;
-            }
-
-            // A - Select All (works with or without Ctrl)
-            if ((e.key === 'a' || e.key === 'A') && (e.ctrlKey || e.metaKey)) {
-                e.preventDefault();
-                this.objectManager.selectAll();
-                this.eventBus.emit('object:selected');
-                return;
-            }
-
-            // E - Deselect All
-            if ((e.key === 'e' || e.key === 'E') && !e.ctrlKey && !e.metaKey) {
-                e.preventDefault();
-                this.objectManager.deselectAll();
-                this.eventBus.emit('object:deselected');
                 return;
             }
         });

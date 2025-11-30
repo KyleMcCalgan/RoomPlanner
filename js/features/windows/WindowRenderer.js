@@ -167,7 +167,9 @@ class WindowRenderer {
                 break;
 
             case 'RIGHT': // Y-Z plane (right wall at X=width)
-                roomX = window.position;
+                // Right view is mirrored - flip Y coordinate (looking from right to left)
+                const roomLength = this.room.dimensions.length;
+                roomX = roomLength - window.position - window.dimensions.width;
                 roomY = window.heightFromFloor;
                 roomWidth = window.dimensions.width;
                 roomHeight = window.dimensions.height;

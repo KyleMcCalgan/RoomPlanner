@@ -5,6 +5,7 @@ class ViewManager {
     constructor(eventBus) {
         this.eventBus = eventBus;
         this.currentView = 'TOP'; // TOP, FRONT, LEFT, RIGHT
+        this.hoveredView = null; // Track which view button is being hovered
         this.setupEventListeners();
     }
 
@@ -18,6 +19,16 @@ class ViewManager {
             btn.addEventListener('click', () => {
                 const view = btn.getAttribute('data-view');
                 this.setView(view);
+            });
+
+            // Hover events to show direction indicators
+            btn.addEventListener('mouseenter', () => {
+                const view = btn.getAttribute('data-view');
+                this.setHoveredView(view);
+            });
+
+            btn.addEventListener('mouseleave', () => {
+                this.setHoveredView(null);
             });
         });
 
@@ -57,6 +68,8 @@ class ViewManager {
         }
 
         this.currentView = view;
+        // Clear hovered view when switching views
+        this.hoveredView = null;
         this.updateViewButtons();
         this.eventBus.emit('view:changed', { view: this.currentView });
     }
@@ -67,6 +80,26 @@ class ViewManager {
      */
     getCurrentView() {
         return this.currentView;
+    }
+
+    /**
+     * Set the hovered view (for direction indicators)
+     * @param {string|null} view - View name or null
+     */
+    setHoveredView(view) {
+        // Only show indicators when in TOP view
+        if (this.currentView !== 'TOP') return;
+
+        this.hoveredView = view;
+        this.eventBus.emit('view:hovered', { view: this.hoveredView });
+    }
+
+    /**
+     * Get the hovered view
+     * @returns {string|null} Hovered view name or null
+     */
+    getHoveredView() {
+        return this.hoveredView;
     }
 
     /**

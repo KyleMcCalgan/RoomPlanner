@@ -1,1644 +1,960 @@
-# Space Planner - Refactored Project Specification
+# Space Planner - Project Documentation
+
+**Last Updated:** November 2025
+**Status:** Phase 7 Complete - Core Features Functional
+**Technologies:** HTML5, CSS3, Vanilla JavaScript (OOP)
+
+---
 
 ## Project Overview
 
-A web-based space planning application that allows users to check if items will fit into a defined space. Users define a floor plan with specific dimensions and add objects with height, width, and length properties. Multiple views (top-down and side views) visualize object placement with real-time statistics about space utilization.
+A web-based 3D space planning application for visualizing room layouts with furniture, windows, and doors. Users can create custom rooms, place objects with real dimensions, and view their space from multiple perspectives (top, front, left, right). Features include intelligent collision detection, object stacking, and real-time statistics.
+
+### Primary Use Cases
+- **Home Planning:** Verify furniture fits before purchasing
+- **Interior Design:** Visualize room layouts and arrangements
+- **Space Optimization:** Calculate floor usage and remaining space
+- **Moving Planning:** Plan furniture placement in new spaces
 
 ---
 
-## Current Implementation Status
+## Current Status - What Works Now
 
-**Last Updated:** November 2025 (Post-Phase 7.10 + Precreated Objects)
-**Current Status:** Doors Complete with Arc Visualization, Precreated Objects Implemented
-**Completed Phases:** 1-7.10 (Foundation, Objects, Views, Windows, Doors), Preset Objects
-**Remaining Phases:** 8-10 (Statistics refinements, Export, Polish)
+### ✅ Core Features (Phases 1-7 Complete)
 
-### ✅ What's Working Now:
-- ✓ Room creation and visualization with grid pattern
-- ✓ **Custom & Precreated Object Creation**
-  - Custom objects with user-defined dimensions
-  - **70+ precreated household objects in 8 categories**
-  - Auto-numbered naming for preset objects
-  - Read-only dimensions for preset objects (name & color editable)
-- ✓ Object placement, movement, rotation, deletion
-- ✓ Collision detection with room boundaries and other objects
-- ✓ Per-object collision toggle for intentional overlapping/stacking
-- ✓ **Intelligent stacking system based on creation order**
-- ✓ Real-time statistics with accurate overlap handling
-- ✓ Dark theme interface
-- ✓ **All four views: Top, Front, Left, Right with hotkey switching (1-4)**
-- ✓ **Full object editing modal with position fine-tuning**
-- ✓ Context menu (right-click) for object actions
-- ✓ Object duplication functionality
-- ✓ Transparent objects with colored outlines
-- ✓ Selection and manipulation in all views
-- ✓ **Windows system with full interactivity (Phases 7.1-7.4)**
-  - Window creation, placement, editing, deletion
-  - PowerPoint-style resize handles (8 handles: corners + edges)
-  - Drag to reposition along walls
-  - Keyboard shortcuts (D=duplicate, Delete, Escape)
-  - Window list in right panel with selection
-  - Top view indicators (faint lines on walls)
-  - Statistics (window count and total area)
-  - Silent collision detection (prevents overlaps)
-- ✓ **Doors system with complete arc visualization (Phases 7.5-7.10)**
-  - Door creation with swing direction & hinge position
-  - Swing arc visualization in TOP view
-  - **Arc clearance zones in perpendicular side views**
-  - Enhanced collision detection (80+ sample points)
-  - Blocked door indicators (red coloring)
-  - Door list in right panel
-  - Statistics (door count, blocked doors)
-  - Correct view rendering (LEFT/RIGHT view fix)
+**Room System**
+- Custom dimensions (width, length, height) with metric display
+- Grid overlay with 1-meter spacing
+- Rulers showing measurements in all views
+- Dark theme interface with blue accent colors
 
-### 🔄 Key Design Changes from Original Spec:
-1. **Dark Theme:** Changed from light to dark color scheme for better visibility
-2. **No Header:** Removed top header bar; controls in left panel, toggle in footer
-3. **Meters Display:** Units shown in meters (m) for user input/display, stored internally as cm
-4. **Grid Pattern:** 1-meter grid overlay on room floor for spatial reference
-5. **Transparent Objects:** Objects render with 15% fill opacity, 100% outline opacity
-6. **Panel Position:** Side panel on left instead of right, collapsible
-7. **Canvas Size:** Fixed 800x600 canvas with maximized viewport usage
-8. **Creation-Order Stacking:** Objects stack based on creation order - first created = bottom of stack
-9. **Bilateral Collision Toggle:** Stacking occurs when EITHER object has collision disabled
-10. **Preset Objects System:** Scalable catalog of common household items with locked dimensions
-11. **Enhanced Door Arcs:** Swing arcs visible in perpendicular views for easier placement
+**Objects & Furniture**
+- **Custom Objects:** User-defined name, dimensions, color
+- **70+ Preset Objects:** Organized in 8 categories (Bedroom, Living Room, Kitchen, etc.)
+- Auto-numbered naming ("Queen Bed 1", "Queen Bed 2")
+- Preset objects have locked dimensions, editable name/color
+- Full interactivity: place, select, move, rotate, delete, duplicate
+- Context menu (right-click) for editing properties
+- Collision detection with room boundaries
+- Optional collision toggle for intentional overlapping
+- **Intelligent stacking:** Creation-order hierarchy, bilateral collision rules
 
-### 📋 Still To Implement:
-- Phase 8: Statistics refinements and additional metrics
-- Phase 9: PNG export functionality
-- Phase 10: Final polish and testing
+**Windows**
+- Place on any wall (front, back, left, right)
+- 8-point PowerPoint-style resize handles (corners + edges)
+- Drag to reposition along walls
+- Visual indicators: cutouts in side views, wall markers in top view
+- Collision prevention with other windows and doors
+- Window list in side panel with statistics
 
-### 💡 Potential Future Enhancements:
-**Windows:**
-- Arrow key nudging for fine positioning
-- Snap to grid/intervals along walls
-- Alignment tools (align tops/bottoms, distribute evenly)
-- Window size presets (small/medium/large)
-- Multi-select windows (Ctrl+click)
+**Doors**
+- Configurable swing direction (inward/outward) and hinge position (left/right)
+- **Swing arc visualization in top view** (quarter-circle clearance zone)
+- **Perpendicular arc indicators** (view door clearance from side views)
+- Blocked door detection when objects obstruct swing path
+- Full collision prevention with windows and other doors
+- Door list with blocked status indicators
 
-**Precreated Objects:**
-- Load from external API/database
-- User-customizable object library
-- Import/export custom object definitions
-- Object thumbnails/preview images
-- Tags and search functionality
-- Community-shared object library
+**Multi-View System**
+- 4 perspectives: TOP (floor plan), FRONT, LEFT, RIGHT (elevations)
+- Hotkey switching (1, 2, 3, 4 keys)
+- **Direction indicators:** Hover over view buttons to see arrows showing viewing angle
+- All interactions work in appropriate views (placement, selection, movement)
+
+**Keyboard Shortcuts**
+- **Creation:** O (custom object), P (preset object), W (window), B (door)
+- **Actions:** R (rotate), D (duplicate), H (hide/show), C (toggle collision)
+- **Selection:** Ctrl+A (select all), E (deselect all), Delete (remove)
+- **Views:** 1 (top), 2 (front), 3 (left), 4 (right)
+- **Help:** ? (show shortcuts)
+
+**Statistics & Analytics**
+- Real-time floor space usage (m² and percentage)
+- Object count and total volume
+- Tallest object and remaining ceiling height
+- Window count and total area
+- Door count with blocked door tracking
 
 ---
 
-## Core Philosophy
+## Architecture Overview
 
-**File Organization:** Object-oriented, feature-based structure
+### Design Philosophy
+**Feature-Based Organization:** Each major domain (Room, Objects, Windows, Doors, Views) is self-contained with minimal cross-dependencies.
 
-- Each feature (Room, Objects, Windows/Doors) is self-contained
-- Related concerns (logic, rendering, UI interactions) grouped together
-- Clear boundaries between features with minimal cross-file dependencies
+**Separation of Concerns:**
+- **Models:** Data structures and validation (`Room.js`, `PlaceableObject.js`, `Window.js`, `Door.js`)
+- **Controllers:** Business logic and user interactions (`ObjectController.js`, `WindowController.js`, `DoorController.js`)
+- **Views:** UI components and modals (`ObjectView.js`, `WindowView.js`, `DoorView.js`)
+- **Renderers:** Canvas drawing logic (`RoomRenderer.js`, `ObjectRenderer.js`, `WindowRenderer.js`, `DoorRenderer.js`)
 
-**User Flow:**
+**Event-Driven Communication:** Centralized `EventBus` allows features to communicate without tight coupling.
 
-1. **Setup Phase:** Define room dimensions
-2. **Creation Phase:**
-   - **Custom Objects:** Create object with user-defined dimensions, name, color → click canvas to place
-   - **Precreated Objects:** Browse categorized catalog → select preset object → click canvas to place
-3. **Editing Phase:** Move objects, rotate, adjust properties, toggle collision
-   - Custom objects: All properties editable
-   - Preset objects: Name, color, position editable (dimensions locked)
-4. **Analysis Phase:** View statistics, switch between views, export
-
----
-
-## Project File Structure
+### File Structure (Simplified)
 
 ```
-space-planner/
-│
-├── index.html                          # Single HTML file
-│
-├── css/
-│   ├── base.css                        # Global styles, layout, theme
-│   ├── canvas.css                      # Canvas and viewport styling
-│   ├── panel.css                       # Control panels and sidebars
-│   └── modal.css                       # Dialog/modal styling
-│
+RoomPlanner/
+├── index.html                    # Single-page application
+├── css/                          # Styling (base, canvas, panel, modal)
 ├── js/
-│   ├── data/
-│   │   └── PresetObjects.js            # Catalog of precreated objects (API-ready)
-│   │
 │   ├── core/
-│   │   ├── app.js                      # Application entry point & state
-│   │   ├── viewport.js                 # Canvas management & scaling
-│   │   └── eventBus.js                 # Application event system
-│   │
+│   │   ├── app.js                # Application bootstrap
+│   │   ├── viewport.js           # Canvas management & coordinate system
+│   │   └── eventBus.js           # Event system
+│   ├── data/
+│   │   └── PresetObjects.js      # Catalog of 70+ furniture items
 │   ├── features/
-│   │   │
-│   │   ├── room/
-│   │   │   ├── Room.js                 # Room data model
-│   │   │   ├── RoomController.js       # Room creation/management logic
-│   │   │   ├── RoomView.js             # Room UI components & dialogs
-│   │   │   └── RoomRenderer.js         # Room rendering logic
-│   │   │
-│   │   ├── objects/
-│   │   │   ├── PlaceableObject.js      # Object data model
-│   │   │   ├── ObjectManager.js        # Object CRUD & state management
-│   │   │   ├── ObjectController.js     # Object interaction handlers
-│   │   │   ├── ObjectView.js           # Object UI components
-│   │   │   └── ObjectRenderer.js       # Object rendering logic
-│   │   │
-│   │   ├── windows/
-│   │   │   ├── Window.js               # Window data model
-│   │   │   ├── WindowController.js     # Window creation/management
-│   │   │   ├── WindowView.js           # Window UI
-│   │   │   └── WindowRenderer.js       # Window rendering
-│   │   │
-│   │   ├── doors/
-│   │   │   ├── Door.js                 # Door data model
-│   │   │   ├── DoorController.js       # Door creation/management
-│   │   │   ├── DoorView.js             # Door UI
-│   │   │   └── DoorRenderer.js         # Door rendering
-│   │   │
-│   │   └── views/
-│   │       ├── ViewManager.js          # View state & switching
-│   │       └── ViewRenderer.js         # Multi-view rendering orchestration
-│   │
+│   │   ├── room/                 # Room.js, RoomController, RoomView, RoomRenderer
+│   │   ├── objects/              # PlaceableObject, ObjectManager, ObjectController, ObjectView, ObjectRenderer
+│   │   ├── windows/              # Window, WindowManager, WindowController, WindowView, WindowRenderer
+│   │   ├── doors/                # Door, DoorManager, DoorController, DoorView, DoorRenderer
+│   │   └── views/                # ViewManager, ViewRenderer
 │   ├── services/
-│   │   ├── CollisionService.js         # Collision detection logic
-│   │   ├── StatisticsService.js        # Statistics calculations
-│   │   ├── ExportService.js            # PNG export functionality
-│   │   └── StorageService.js           # Project save/load (future)
-│   │
+│   │   ├── CollisionService.js   # Collision detection & validation
+│   │   ├── StatisticsService.js  # Calculations and metrics
+│   │   └── ExportService.js      # PNG export (in progress)
 │   └── utils/
-│       ├── geometry.js                 # Mathematical utilities
-│       ├── drawing.js                  # Canvas drawing helpers
-│       └── helpers.js                  # General utilities
-│
-└── README.md                           # Documentation
+│       ├── geometry.js           # Math helpers
+│       ├── drawing.js            # Canvas utilities
+│       └── helpers.js            # General utilities
+└── README.md
 ```
 
-**Rationale:**
+### Key Technical Details
 
-- **`data/`** - Static data catalogs (scalable, API-ready)
-- **`core/`** - Application infrastructure (bootstrap, events, viewport)
-- **`features/`** - Each major domain (Room, Objects, Windows, Doors, Views) contains all related code
-- **`services/`** - Shared business logic used by multiple features
-- **`utils/`** - Pure utility functions with no dependencies
-- **Fewer files per feature** means less file-hopping during development
-- **Clear naming** (Controller/View/Renderer/Model) shows responsibility
+**Coordinate System:**
+- Internal storage: **centimeters** (cm)
+- User display: **meters** (m)
+- Canvas coordinates: Pixel positions with viewport scaling
+- Z-axis: Floor is Z=0, ceiling is Z=room.height
 
-**Currently Implemented Files:**
-- ✓ **PresetObjects.js** (70+ household objects in 8 categories)
-- ✓ All core/ files
-- ✓ All features/room/ files
-- ✓ All features/objects/ files (with preset object support)
-- ✓ All features/views/ files
-- ✓ **All features/windows/ files (Phases 7.1-7.4 COMPLETE)**
-- ✓ **All features/doors/ files (Phases 7.5-7.10 COMPLETE)**
-- ✓ CollisionService.js (with enhanced door arc collision - 80+ sample points)
-- ✓ StatisticsService.js
-- ⏳ ExportService.js (Phase 9)
+**View Transformations:**
+- TOP view: X-Y plane (floor plan)
+- FRONT view: X-Z plane (width × height)
+- LEFT view: Y-Z plane (length × height, viewing right wall)
+- RIGHT view: Y-Z plane mirrored (length × height, viewing left wall)
 
----
+**Collision Detection:**
+- AABB (Axis-Aligned Bounding Box) for objects
+- Per-wall segment overlap for windows/doors
+- 80+ sample point checking for door swing arcs
+- Bilateral collision rules for stacking
 
-## User Interface Layout (CURRENT IMPLEMENTATION)
-
-### Main Layout Structure
-
-```
-┌─────────────┬──────────────────────────────────────────────────┐
-│             │                                                  │
-│  CONTROLS   │                                                  │
-│  PANEL      │                                                  │
-│  (Left)     │           MAIN CANVAS AREA                      │
-│             │           (Fixed 800x600)                        │
-│ Room Setup  │       Dark background with grid                 │
-│ Add Object  │                                                  │
-│ Add Window  │                                                  │
-│ Add Door    │                                                  │
-│ Export View │                                                  │
-│             │                                                  │
-│ STATISTICS  │                                                  │
-│  Floor: Xm² │                                                  │
-│  Used: X%   │                                                  │
-│  Objects: X │                                                  │
-│  Volume: Xm³│                                                  │
-│  Tallest: Xm│                                                  │
-│  Remain: Xm │                                                  │
-│             │                                                  │
-└─────────────┴──────────────────────────────────────────────────┤
-│ [≡] [1] [2] [3] [4]                            Mode: Ready     │  Footer
-└────────────────────────────────────────────────────────────────┘
-```
-
-### Layout Details
-
-**Left Side Panel (280px, Collapsible):**
-
-- **Controls Section:**
-  - Room Setup (opens modal for dimensions)
-  - Add Object (opens modal for object properties)
-  - Add Window (enabled - fully functional)
-  - Add Door (disabled - Phase 7.5+)
-  - Export View (placeholder - Phase 9)
-- **Statistics Section:**
-  - Floor Space (m²)
-  - Space Used (%)
-  - Object Count
-  - Total Volume (m³)
-  - Tallest Object (m)
-  - Remaining Height (m)
-  - **Windows Count**
-  - **Window Area (m²)**
-- Collapses completely off-screen when toggled
-- Smooth slide animation
-
-**Main Canvas (800x600):**
-
-- Centered in remaining space
-- Dark background (#2D2D30)
-- 1-meter grid pattern (white lines, 15% opacity)
-- Room rendered with:
-  - Light gray background (#3A3A3C)
-  - Blue border (#5B9BD5)
-  - Horizontal and vertical rulers showing meters
-- Objects render as transparent (15% fill) with solid outline
-- Red diagonal lines indicate collision disabled
-
-**Footer:**
-
-- **Left side:**
-  - ≡ Toggle panel button
-  - View selector buttons: [1] [2] [3] [4]
-    - Currently only [1] (top-down) is active
-    - [2], [3], [4] disabled (Phase 6)
-- **Right side:**
-  - Mode indicator: "Ready" / "Click to place object..." / "Editing mode"
+**Stacking System:**
+- Creation order determines hierarchy (first created = bottom)
+- Stacking occurs when EITHER object has collision disabled
+- Z-positions auto-recalculate on movement, rotation, or property changes
 
 ---
 
-## Feature Breakdown
-
-### Features Overview
-
-Each feature follows the same pattern:
-
-```
-Feature/
-├─ Model.js           # Data structure & validation
-├─ Controller.js      # Business logic & interactions
-├─ View.js            # UI components & modals
-└─ Renderer.js        # Canvas drawing
-```
-
----
-
-### 1. Room Feature
-
-**`Room.js` (Data Model)**
-
-```javascript
-class Room {
-  constructor(width, length, height) {
-    this.id = generateId();
-    this.dimensions = { width, length, height };
-    this.windows = [];
-    this.doors = [];
-  }
-  
-  updateDimensions(width, length, height) { ... }
-  isPointInBounds(x, y, z) { ... }
-  getFloorArea() { ... }
-}
-```
-
-**`RoomController.js` (Logic)**
-
-- Initialize default room
-- Handle room dimension updates
-- Validate dimensions
-- Emit events when room changes
-
-**`RoomView.js` (UI)**
-
-- Room setup form/modal
-- Dimension input fields
-- Validation feedback
-
-**`RoomRenderer.js` (Rendering)**
-
-- Draw room boundaries in all views
-- Draw rulers with measurements
-- Handle view-specific room drawing
-
----
-
-### 2. Objects Feature
-
-**`PlaceableObject.js` (Data Model)**
-
-```javascript
-class PlaceableObject {
-  constructor(name, width, length, height, color, isPreset = false, presetId = null) {
-    this.id = generateId();
-    this.name = name;
-    this.dimensions = { width, length, height };
-    this.position = { x: 0, y: 0, z: 0 };
-    this.rotation = 0; // 0, 90, 180, 270
-    this.color = color;
-    this.collisionEnabled = true;
-    this.creationOrder = 0;
-    this.isPreset = isPreset; // True if precreated object
-    this.presetId = presetId; // ID of preset (e.g., 'queen_bed')
-  }
-
-  move(x, y, z) { ... }
-  rotate(degrees) { ... }
-  isAt(x, y, z) { ... }
-  getBounds() { ... }
-}
-```
-
-**`PresetObjects.js` (Data Catalog - NEW)**
-
-```javascript
-const PRESET_OBJECTS = {
-  bedroom: {
-    categoryName: "Bedroom",
-    items: [
-      { id: "queen_bed", name: "Queen Bed", width: 160, length: 200, height: 50, color: "#4A90E2" },
-      { id: "bedside_table", name: "Bedside Table", width: 40, length: 40, height: 50, color: "#8B4513" },
-      // ... more items
-    ]
-  },
-  living_room: { ... },
-  dining: { ... },
-  // 8 categories total with 70+ objects
-}
-```
-
-**Key Features:**
-- **Scalable Structure:** Easy to add new objects/categories
-- **API-Ready:** Can be replaced with `fetch()` call
-- **Helper Functions:** `getPresetCategories()`, `getPresetObjectById()`, `searchPresetObjects()`
-
-**`ObjectManager.js` (State Management)**
-
-- Store all objects (custom & preset)
-- CRUD operations
-- Track selected object
-- Handle object ordering
-
-**`ObjectController.js` (Interactions)**
-
-- **Custom object creation flow** (modal → placement mode)
-- **Preset object creation flow** (catalog selection → auto-naming → placement mode)
-- Auto-numbered naming: "Queen Bed 1", "Queen Bed 2", etc.
-- Selection (click detection)
-- Movement (drag handling)
-- Rotation (keyboard)
-- Deletion
-- Property editing (dimension-aware for presets)
-
-**`ObjectView.js` (UI)**
-
-- **Custom object modal** (name, dimensions, color)
-- **Preset object modal** (categorized grid with 70+ objects)
-- **Edit object modal** (dimension fields locked for presets)
-- Right-click context menu
-- Color picker
-- Object list/inspector
-
-**`ObjectRenderer.js` (Rendering)**
-
-- Draw objects as rectangles in top-down view
-- Draw objects in side views
-- Draw selection highlight
-- Handle rotation visualization
-- Draw object labels
-
----
-
-### 3. Windows Feature
-
-**`Window.js` (Data Model)**
-
-```javascript
-class Window {
-  constructor(wall, position, width, height, heightFromFloor) {
-    this.id = generateId();
-    this.wall = wall; // "front", "back", "left", "right"
-    this.position = position; // along wall
-    this.width = width;
-    this.height = height;
-    this.heightFromFloor = heightFromFloor;
-  }
-}
-```
-
-**`WindowManager.js` (State Management)**
-
-- Store all windows
-- CRUD operations
-- Track selected window
-- Calculate total window area
-
-**`WindowController.js` (Logic)**
-
-- Creation flow (modal → placement mode → click to place)
-- Selection (click detection in side views)
-- Movement (drag-to-reposition along wall)
-- Resizing (PowerPoint-style handles - 8 resize handles)
-- Deletion and duplication
-- Property editing
-- Keyboard shortcuts (D, Delete, Escape)
-- Cursor feedback (move, resize directions)
-
-**`WindowView.js` (UI)**
-
-- Window creation modal (wall, dimensions, heightFromFloor)
-- Edit window modal (all properties + position along wall)
-- Right-click context menu (Edit, Duplicate, Delete)
-- Default dimensions: width=20% of room, height=30% of room, heightFromFloor=30% of room
-
-**`WindowListView.js` (UI - Right Panel)**
-
-- Display all windows in list format
-- Show window number, dimensions, wall location
-- Click to select window
-- Right-click for context menu
-- Visual selection highlighting
-
-**`WindowRenderer.js` (Rendering)**
-
-- **Side views (FRONT/LEFT/RIGHT):** Draw as cutouts with canvas background visible, grid removed, white border
-- **Top view:** Draw position indicators on walls (faint white lines, blue for selected)
-- Selection highlighting with blue dashed border
-- **8 Resize handles** when selected (corners + edges)
-- Preview rendering during placement
-
----
-
-### 4. Doors Feature
-
-**`Door.js` (Data Model)**
-
-```javascript
-class Door {
-  constructor(wall, position, width, height, swingDirection, hingePosition) {
-    this.id = generateId();
-    this.wall = wall; // 'front', 'back', 'left', 'right'
-    this.position = position; // Position along wall (cm)
-    this.dimensions = { width, height };
-    this.swingDirection = swingDirection; // 'inward', 'outward'
-    this.hingePosition = hingePosition; // 'left', 'right'
-    this.isBlocked = false; // Updated by collision detection
-  }
-
-  getSwingArc(room) { ... } // Calculate arc center, radius, angles
-  isPointInSwingArc(x, y, room) { ... } // Check if point is in swing zone
-}
-```
-
-**`DoorController.js` (Interactions)**
-
-- Creation flow (modal → placement → click to place)
-- Selection and movement along walls
-- Deletion and duplication
-- Property editing (wall, dimensions, swing direction, hinge position)
-- **View-aware wall detection** (LEFT/RIGHT view coordinate fix)
-
-**`DoorView.js` (UI)**
-
-- Door creation modal (wall, dimensions, swing direction, hinge position)
-- Edit door modal (all properties + position along wall)
-- Right-click context menu (Edit, Duplicate, Delete)
-- Default dimensions: width=90cm, height=210cm
-
-**`DoorListView.js` (UI - Right Panel)**
-
-- Display all doors in list format
-- Show door number, dimensions, wall location, blocked status
-- Red indicator for blocked doors
-- Click to select door
-
-**`DoorRenderer.js` (Rendering) - ENHANCED**
-
-**TOP View:**
-- Door line on wall (brown color: #C19A6B)
-- **Swing arc visualization** (quarter circle)
-- Blue fill for normal doors, red fill for blocked doors
-- Arc shows clearance zone needed for door swing
-
-**SIDE Views (FRONT/LEFT/RIGHT):**
-- **Door on current wall:** Full door rectangle with brown fill
-- **Door on perpendicular walls:** Semi-transparent clearance zone showing swing depth
-  - Example: Door on FRONT wall → visible in LEFT and RIGHT views as blue zone
-- **Enhanced view rendering logic:**
-  - LEFT view: See RIGHT wall (doors on right show as full door, doors on front/back show as arcs)
-  - RIGHT view: See LEFT wall (mirrored coordinate system)
-  - FRONT view: See FRONT wall (doors on front show as full door, doors on left/right show as arcs)
-
-**Coordinate System Fix:**
-- **LEFT view:** Shows right wall, no mirroring
-- **RIGHT view:** Shows left wall, X coordinates mirrored (`x = roomLength - y - width`)
-- This ensures doors appear on the correct side in all views
-
-**Key Implementation Details:**
-1. **Perpendicular Arc Rendering:** When viewing from a perpendicular wall, doors show their swing clearance as a semi-transparent zone
-2. **Inward Doors Only:** Only inward-swinging doors show arcs (outward doors swing outside room)
-3. **Color Coding:** Normal = blue (#5B9BD5), Blocked = red (#FF4444)
-4. **Dashed Borders:** Arcs use dashed borders to distinguish from full doors
-
----
-
-### 5. Views Feature
-
-**`ViewManager.js` (State)**
-
-- Track current view (TOP, FRONT, LEFT, RIGHT)
-- Handle view switching
-- Hotkey bindings
-
-**`ViewRenderer.js` (Orchestration)**
-
-- Determine which renderers to call based on current view
-- Call RoomRenderer, ObjectRenderer, WindowRenderer, DoorRenderer appropriately
-- Handle canvas setup/clearing per view
-
----
-
-## Core Services
-
-### CollisionService
-
-```javascript
-class CollisionService {
-  checkBoundaryCollision(object, room) { ... }
-  checkObjectCollision(object1, object2) { ... }
-  checkWindowCollision(window1, window2) { ... }
-  checkWindowDoorCollision(window, door) { ... }
-  checkDoorCollision(door1, door2) { ... }
-  checkDoorSwingArcCollision(door, allObjects, room) { ... } // ENHANCED
-  updateDoorBlockedStatus(allDoors, allObjects, room) { ... }
-  canPlace(object, allObjects, room) { ... }
-  getStackingOrder(objects) { ... } // by creation order
-}
-```
-
-**Enhanced Door Arc Collision Detection:**
-- **Bidirectional checking** prevents missed collisions
-- Object → Arc: Sample 20 points on object edges, check if in arc
-- Arc → Object: Sample 20 points on arc edge, check if inside object bounds
-- Arc Interior: Sample 50 points in radial grid within arc sector
-- **Total: 80+ sample points per object** for thorough detection
-- Handles wrap-around angles correctly for all hinge positions
-
-### StatisticsService
-
-```javascript
-class StatisticsService {
-  calculateFloorArea(room) { ... }
-  calculateUsedArea(objects, room) { ... }
-  calculatePercentageUsed(objects, room) { ... }
-  calculateTotalVolume(objects) { ... }
-  getTallestObject(objects) { ... }
-  calculateRemainingHeight(objects, room) { ... }
-}
-```
-
-### ExportService
-
-```javascript
-class ExportService {
-  exportCurrentViewAsPNG(viewManager, canvas, filename) { ... }
-  generateFilename(viewName) { ... } // "TopView_2025-11-26_14-32.png"
-}
-```
-
----
-
-## Application Flow & State
-
-### Initialization (`app.js`)
-
-```javascript
-class SpaceplannerApp {
-  constructor() {
-    this.eventBus = new EventBus();
-    this.viewport = new Viewport(canvas);
-    this.room = new Room(400, 500, 250); // default
-    this.objectManager = new ObjectManager();
-    this.viewManager = new ViewManager();
-    this.state = {
-      mode: "READY", // READY, CREATING, EDITING
-      selectedObjectId: null,
-      isDragging: false
-    };
-    this.setup();
-  }
-  
-  setup() {
-    // Initialize controllers
-    this.roomController = new RoomController(this.room, this.eventBus);
-    this.objectController = new ObjectController(
-      this.objectManager,
-      this.viewport,
-      this.eventBus,
-      this.state
-    );
-    // ... other controllers
-    
-    // Bind events
-    this.eventBus.on("room:updated", () => this.render());
-    this.eventBus.on("object:added", () => this.render());
-    // ...
-  }
-  
-  render() {
-    const view = this.viewManager.getCurrentView();
-    const renderers = this.getRenderersForView(view);
-    renderers.forEach(r => r.render(this.viewport));
-  }
-}
-```
-
-### User Interactions
-
-**Creating an Object:**
-
-1. User clicks "Add Object" button
-2. ObjectView shows modal
-3. User enters name, dimensions, color
-4. Modal closes → app enters CREATING state
-5. Canvas shows preview of object at cursor
-6. User clicks canvas → object placed
-7. App enters EDITING state
-
-**Editing an Object:**
-
-1. User clicks object on canvas
-2. ObjectController detects click
-3. Object highlighted (selected)
-4. User can:
-    - **Drag** to move
-    - **R key** to rotate
-    - **Delete key** to delete
-    - **Right-click** for context menu
-5. Context menu allows:
-    - Edit dimensions/name/color
-    - Toggle collision
-    - Fine-tune position (X, Y, Z inputs)
-
----
-
-## User Interface Components
-
-### Header
-
-- Logo/Title (left)
-- Menu toggle button (≡) (right)
-- Export button (right)
-
-### Side Panel (Collapsible)
-
-**Control Section:**
-
-- Room Setup button → modal
-- Add Object button → modal
-- Add Window button → modal
-- Add Door button → modal
-- Settings button → modal
-
-**Statistics Section:**
-
-- Floor Space Available: X cm²
-- Total Floor Space: X cm²
-- Floor Space Used: X% (with progress bar)
-- Total Object Volume: X cm³
-- Objects Count: X
-- Tallest Object: X cm
-- Remaining Height: X cm
-
-### Main Canvas
-
-- Measurement rulers on all sides
-- Current view rendered
-- Object labels visible
-- Selection highlighting
-
-### Footer
-
-- View selector: [1] [2] [3] [4] (with hotkey hints)
-- Mode indicator: "Ready" / "Creating Object..." / "Editing Mode"
-
-### Modals/Dialogs
-
-**Room Setup Modal**
-
-- Width, Length, Height inputs (cm)
-- Confirmation buttons
-
-**Object Creation Modal**
-
-- Name input
-- Dimensions (width, length, height)
-- Color picker
-- Create button
-
-**Object Edit Modal**
-
-- Same as creation (name, dimensions, color)
-- Collision toggle checkbox
-- Position fine-tuning (X, Y, Z numerical inputs)
-- Update button
-
-**Window/Door Creation Modals**
-
-- Wall selector (dropdown)
-- Position along wall
-- Width, Height
-- Additional properties (heightFromFloor for windows, swingDirection for doors)
-
----
-
-## Hotkeys & Controls
-
-|Action|Hotkey|
-|---|---|
-|Top-Down View|`1`|
-|Front View|`2`|
-|Left View|`3`|
-|Right View|`4`|
-|Rotate Selected|`R`|
-|Delete Selected|`Delete` / `Backspace`|
-|Export Current View|`Ctrl/Cmd + E`|
-|Deselect/Close Menu|`Escape`|
-|Toggle Side Panel|`Ctrl/Cmd + \`|
-
----
-
-## Implementation Phases (Revised)
-
-### ✅ Phase 1: Foundation & Room (COMPLETE)
-
-**Goal:** See a room rendered on canvas
-
-- **1.1** ✓ Create file structure, HTML/CSS skeleton, base classes
-- **1.2** ✓ Implement `Room.js`, `RoomController.js`
-- **1.3** ✓ Implement `Viewport.js` and canvas setup
-- **1.4** ✓ Implement `RoomRenderer.js` → draw room + rulers + grid
-- **1.5** ✓ Implement `RoomView.js` → room setup modal
-
-**Deliverable:** ✓ Can define room dimensions and see room on canvas
-
-**Implementation Notes:**
-- Dark theme implemented from start
-- Room has 1-meter grid overlay
-- Rulers show meters instead of cm
-- Canvas is 800x600 fixed size
-
----
-
-### ✅ Phase 2: Objects - Creation & Rendering (COMPLETE)
-
-**Goal:** Create and see objects on canvas
-
-- **2.1** ✓ Implement `PlaceableObject.js` data model
-- **2.2** ✓ Implement `ObjectManager.js` for state management
-- **2.3** ✓ Implement `ObjectView.js` → object creation modal
-- **2.4** ✓ Implement `ObjectRenderer.js` → draw objects (top-down)
-- **2.5** ✓ Implement placement mode (click-to-place logic)
-
-**Deliverable:** ✓ Can create objects and place them on canvas in top-down view
-
-**Implementation Notes:**
-- Objects render with 15% fill opacity, 100% outline opacity
-- All measurements displayed in meters, stored as cm internally
-
----
-
-### ✅ Phase 3: Objects - Selection & Movement (COMPLETE)
-
-**Goal:** Interact with placed objects
-
-- **3.1** ✓ Implement `ObjectController.js` → click detection & selection
-- **3.2** ✓ Implement drag-to-move functionality
-- **3.3** ✓ Implement rotation (R key)
-- **3.4** ✓ Implement deletion (Delete key)
-- **3.5** ✓ Visual feedback for selection (blue dashed outline)
-
-**Deliverable:** ✓ Can select, move, rotate, and delete objects
-
-**Implementation Notes:**
-- Context menu implemented (right-click)
-- Toggle collision working
-
----
-
-### ✅ Phase 4: Collision Detection & Stacking (COMPLETE)
-
-**Goal:** Prevent objects from leaving room; enable stacking
-
-- **4.1** ✓ Implement `CollisionService.js`
-- **4.2** ✓ Boundary collision (objects can't leave room)
-- **4.3** ✓ Object-to-object collision detection with AABB
-- **4.4** ✓ Implement collision toggle per object
-- **4.5** ✓ Stacking visualization (Z-ordering by creation order)
-- **4.6** ✓ Intelligent stacking system with bilateral collision rules
-
-**Deliverable:** ✓ Collisions work; can toggle per object to allow overlapping/stacking
-
-**Implementation Notes:**
-- Real-time collision checking during placement and dragging
-- Objects snap back to valid position if collision detected
-- Per-object collision toggle via context menu
-- StatisticsService also implemented with accurate overlap handling
-- **Stacking Rules:**
-  - Creation order determines hierarchy: first created = bottom of stack
-  - Stacking occurs when EITHER object has collision disabled
-  - Example: Object A (created first, collision ON) + Object B (created second, collision OFF) → A at bottom, B stacks on top
-  - Z positions recalculate automatically when objects move, rotate, or collision toggles
-- Boundary check includes Z-axis (objects cannot exceed ceiling height)
-
----
-
-### ✅ Phase 5: Object Editing (COMPLETE)
-
-**Goal:** Fine-tune object properties after placement
-
-- **5.1** ✓ Implement `ObjectController.js` context menu handler
-- **5.2** ✓ Right-click context menu UI
-- **5.3** ✓ Edit modal for dimensions/name/color/position
-- **5.4** ✓ Property updates with re-rendering
-- **5.5** ✓ Object duplication via context menu
-- **5.6** ✓ Collision toggle via context menu
-
-**Deliverable:** ✓ Can right-click objects and edit all properties
-
-**Implementation Notes:**
-- Edit modal includes X, Y, Z position fine-tuning
-- Validation prevents objects from exceeding room boundaries
-- Collision toggle updates stacking in real-time
-- Duplicate creates copy in placement mode
-
----
-
-### ✅ Phase 6: Multiple Views (COMPLETE)
-
-**Goal:** See all four perspectives
-
-- **6.1** ✓ Implement `ViewManager.js`
-- **6.2** ✓ Implement `ViewRenderer.js` orchestration
-- **6.3** ✓ Update `ObjectRenderer.js` for side views
-- **6.4** ✓ Update `RoomRenderer.js` for side views
-- **6.5** ✓ Hotkey switching (1, 2, 3, 4)
-- **6.6** ✓ View indicator in footer
-
-**Deliverable:** ✓ All four views render correctly; can switch with hotkeys
-
-**Implementation Notes:**
-- TOP view: X-Y plane, shows floor layout
-- FRONT view: X-Z plane, shows width and height
-- LEFT view: Y-Z plane, shows length and height
-- RIGHT view: Y-Z plane (reversed), shows length and height from opposite side
-- Object selection and interaction works in all views
-- Placement only allowed in TOP view (enforced with alert)
-
----
-
-### Phase 7: Windows & Doors
-
-**Goal:** Add architectural features with full interaction support
-
-#### Phase 7.1: Window Foundation
-**Goal:** Create window data model and basic infrastructure
-
-- **7.1.1** Implement `Window.js` data model
-  - Properties: wall, position, width, height, heightFromFloor, id
-  - Validation methods for bounds and placement
-- **7.1.2** Implement `WindowManager.js` for CRUD operations
-- **7.1.3** Update Room.js to store windows array
-- **7.1.4** Add window-window collision detection to CollisionService
-
-**Deliverable:** Window data structures and management ready
-
----
-
-#### Phase 7.2: Window UI & Creation
-**Goal:** Allow users to create windows through modal interface
-
-- **7.2.1** Implement `WindowView.js` - UI components
-  - Creation modal: wall dropdown, dimensions, heightFromFloor
-  - Default dimensions: width=8% of room, height=30% of room, heightFromFloor=30% of room
-  - Edit modal and right-click context menu
-- **7.2.2** Implement `WindowController.js` - Creation flow
-  - Handle "Add Window" button → modal → placement mode
-  - Window preview at cursor (only in FRONT/LEFT/RIGHT views)
-  - Validate no overlap with other windows/doors
-  - Click to place on wall
-- **7.2.3** Wire up UI buttons and event handlers
-
-**Deliverable:** Can create windows via modal and place them
-
----
-
-#### Phase 7.3: Window Rendering
-**Goal:** Visualize windows in side views
-
-- **7.3.1** Implement `WindowRenderer.js` - Drawing logic
-  - Render only in FRONT, LEFT, RIGHT views (not visible in TOP)
-  - Draw as cutout: grey canvas background visible, grid lines removed in window area, thin white border
-  - Calculate correct position based on wall and heightFromFloor
-- **7.3.2** Update ViewRenderer.js to call WindowRenderer
-- **7.3.3** Add selection highlighting for windows
-- **7.3.4** Add hover effects
-
-**Deliverable:** Windows render correctly in side views as cutouts
-
----
-
-#### Phase 7.4: Window Interactions
-**Goal:** Make windows fully interactive
-
-- **7.4.1** Implement click detection for window selection
-- **7.4.2** Implement drag-to-move along wall (constrained to same wall)
-- **7.4.3** Implement right-click context menu → Edit/Delete
-- **7.4.4** Add windows to right-hand panel list (similar to ObjectListView)
-- **7.4.5** Update statistics panel: window count, total wall area used
-
-**Deliverable:** Windows are fully interactive - selectable, movable, editable, deletable
-
----
-
-----
-
-#### Phase 7.5: Door Foundation (TODO)
-**Goal:** Create door data model and infrastructure
-
-- **7.5.1** Implement `Door.js` data model
-  - Properties: wall, position, width, height, swingDirection (inward/outward), hingePosition (left/right), id
-  - Methods: getSwingArc() for rendering swing arc, validation
-- **7.5.2** Implement `DoorManager.js` for CRUD operations
-- **7.5.3** Update Room.js to store doors array
-- **7.5.4** Add door-door and door-window collision detection to CollisionService
-
-**Deliverable:** Door data structures and management ready
-
----
-
-#### Phase 7.6: Door UI & Creation
-**Goal:** Allow users to create doors through modal interface
-
-- **7.6.1** Implement `DoorView.js` - UI components
-  - Creation modal: wall dropdown, dimensions, swingDirection (inward/outward), hingePosition (left/right)
-  - Default dimensions: width=10% of room, height=80% of room
-  - Edit modal and right-click context menu
-- **7.6.2** Implement `DoorController.js` - Creation flow
-  - Handle placement mode with view-specific behavior:
-    - TOP view: door + arc visible, draggable to any wall
-    - Side views: door visible as cutout, constrained to current wall
-  - Preview door with swing arc
-  - Validate no overlap with other doors/windows
-- **7.6.3** Wire up UI buttons and event handlers
-
-**Deliverable:** Can create doors via modal and place them with appropriate behavior per view
-
----
-
-#### Phase 7.7: Door Rendering
-**Goal:** Visualize doors in all views
-
-- **7.7.1** Implement `DoorRenderer.js` - Drawing logic
-  - **TOP view:** Draw small rectangle for door + swing arc (quarter circle)
-  - **Side views:** Draw as cutout (grey background, no grid, thin white border)
-  - Calculate swing arc based on swingDirection and hingePosition
-  - Handle door thickness/width representation
-- **7.7.2** Update ViewRenderer.js to call DoorRenderer for all views
-- **7.7.3** Add selection highlighting and hover effects
-
-**Deliverable:** Doors render correctly in all views with swing arc in TOP view
-
----
-
-#### Phase 7.8: Door Interactions
-**Goal:** Make doors fully interactive
-
-- **7.8.1** Implement click detection and selection in all views
-- **7.8.2** Implement drag-to-move with view-specific behavior:
-  - TOP view: drag to any wall, snap to nearest wall
-  - Side views: drag along same wall only (similar to windows)
-- **7.8.3** Implement right-click context menu → Edit/Delete
-- **7.8.4** Add doors to right-hand panel list
-- **7.8.5** Update statistics: door count, wall area used
-
-**Deliverable:** Doors are fully interactive with view-specific movement behavior
-
----
-
-#### Phase 7.9: Collision & Clearance Logic
-**Goal:** Implement advanced collision detection and clearance warnings
-
-- **7.9.1** Implement door swing arc collision detection with objects
-- **7.9.2** Add visual indicators when objects block door swing (clearance warnings)
-- **7.9.3** Update statistics panel with clearance warnings count/details
-- **7.9.4** Ensure validation prevents window/door overlap during placement and editing
-- **7.9.5** Verify objects can overlap windows/doors (realistic behavior)
-
-**Deliverable:** Comprehensive collision system with clearance warnings for blocked doors
-
----
-
-#### Phase 7.10: Integration & Polish
-**Goal:** Ensure seamless integration with existing features
-
-- **7.10.1** Test window placement, editing, deletion in all side views
-- **7.10.2** Test door placement, editing, deletion with view switching
-- **7.10.3** Verify statistics update correctly for all operations
-- **7.10.4** Test interaction between windows, doors, and objects
-- **7.10.5** Ensure view switching maintains window/door state correctly
-- **7.10.6** Polish UI styling to match dark theme
-- **7.10.7** Add keyboard shortcuts if beneficial (optional)
-- **7.10.8** Update right-hand panel to show windows/doors with proper icons/labels
-
-**Deliverable:** Fully polished and integrated windows & doors feature
-
----
-
-### Design Specifications for Phase 7
-
-#### Window Specifications (IMPLEMENTED):
-- **Default Dimensions:** Width = 20% of room width, Height = 30% of room height
-- **Default Position:** 30% of wall height from floor
-- **Placement:** Only in FRONT, LEFT, RIGHT views (not in TOP view)
-- **Movement:** Drag along same wall only; maintains click offset
-- **Resizing:** 8 PowerPoint-style handles (4 corners + 4 edges)
-- **Minimum Size:** 10cm width and height
-- **Collision:** Silent detection - prevents overlaps without popups
-- **Selection:** Blue dashed border with resize handles
-- **Top View:** Faint white indicator lines on walls (blue when selected)
-- **Keyboard Shortcuts:** D (duplicate), Delete/Backspace (delete), Escape (deselect)
-- **Statistics:** Window count and total area displayed
-- **List View:** Shows in right panel with name, dimensions, wall location
-
-#### Door Specifications (TODO - Phase 7.5+):ifferent wall, delete and recreate in appropriate view
-- **Rendering:** Empty cutout (canvas grey background visible, grid lines removed, thin white border)
-- **Collision:** Cannot overlap with other windows or doors; objects CAN overlap windows
-
-#### Door Specifications:
-- **Default Dimensions:** Width = 10% of room width, Height = 80% of room height
-- **Swing Direction:** User chooses inward or outward during creation
-- **Hinge Position:** User chooses left or right during creation
-- **Placement:**
-  - TOP view: Shows small rectangle + swing arc, draggable to any wall
-  - Side views: Shows as cutout, draggable along same wall only
-- **Movement:** View-specific behavior (TOP = any wall, Side = same wall only)
-- **Rendering:**
-  - TOP view: Rectangle + quarter-circle swing arc
-  - Side views: Empty cutout (canvas grey background, no grid, thin white border)
-- **Collision:** Cannot overlap with other doors or windows; objects CAN overlap doors
-- **Clearance:** Detect if swing arc is blocked by objects and show warnings
-
-#### Wall Naming Convention:
-- **Front Wall:** Bottom edge in TOP view (Y=0)
-- **Back Wall:** Top edge in TOP view (Y=length)
-- **Left Wall:** Left edge in TOP view (X=0)
-- **Right Wall:** Right edge in TOP view (X=width)
-
-#### UI Integration:
-- **Panel List:** Windows and doors appear in right-hand panel (similar to ObjectListView)
-- **Context Menu:** Right-click on window/door → Edit, Delete, Move options
-- **Statistics Updates:**
-  - Window count
-  - Door count
-  - Total wall area used by windows/doors (as percentage)
-  - Clearance warnings (number of doors blocked by objects)
-
-**Complete Deliverable:** Fully functional windows and doors with creation, placement, editing, movement, deletion, and statistics integration
-
----
-
-### ✅ Phase 8: Statistics (MOSTLY COMPLETE)
-
-**Goal:** Real-time space utilization data
-
-- **8.1** ✓ Implement `StatisticsService.js` calculations
-- **8.2** ✓ Implement statistics panel UI
-- **8.3** ✓ Wire statistics to update on object changes
-- **8.4** ✓ Display real-time metrics
-
-**Deliverable:** ✓ Statistics panel updates in real-time with accurate data
-
-**Current Statistics Displayed:**
-- Floor Space (m²)
-- Space Used (%)
-- Object Count
-- Total Volume (m³)
-- Tallest Object (m)
-- Remaining Height (m)
-
-**Potential Additions (Phase 8 refinement):**
-- Window count and total window area
-- Door count
-- Wall space utilization
-
----
-
-### Phase 9: Export
-
-**Goal:** Save views as PNG
-
-- **9.1** Implement `ExportService.js`
-- **9.2** Canvas-to-PNG conversion
-- **9.3** Filename generation (view + timestamp)
-- **9.4** Export button in header
-
-**Deliverable:** Can export any view as PNG
-
----
-
-### Phase 10: Polish & Testing
-
-**Goal:** Refine UX, fix bugs, optimize
-
-- **10.1** UI refinement (colors, spacing, fonts)
-- **10.2** Error handling and validation
-- **10.3** Edge case testing (extreme dimensions, overlaps, etc.)
-- **10.4** Performance optimization
-- **10.5** Accessibility review
-
-**Deliverable:** Production-ready MVP
-
----
-
-## Data Models Summary
+## Data Models
 
 ### Room
-
 ```javascript
 {
   id: string,
-  dimensions: { width, length, height },
+  dimensions: { width: number, length: number, height: number },  // cm
   windows: Window[],
   doors: Door[]
 }
 ```
 
 ### PlaceableObject
-
 ```javascript
 {
   id: string,
   name: string,
-  dimensions: { width, length, height },
-  position: { x, y, z },
-  rotation: 0 | 90 | 180 | 270,
-  color: string (hex),
+  dimensions: { width: number, length: number, height: number },  // cm
+  position: { x: number, y: number, z: number },  // cm
+  rotation: 0 | 90 | 180 | 270,  // degrees
+  color: string,  // hex code
   collisionEnabled: boolean,
-  creationOrder: number
+  creationOrder: number,
+  isPreset: boolean,  // true for catalog objects
+  presetId: string | null  // e.g., "queen_bed"
 }
 ```
 
 ### Window
-
 ```javascript
 {
   id: string,
   wall: "front" | "back" | "left" | "right",
-  position: number,
-  width: number,
-  height: number,
-  heightFromFloor: number
+  position: number,  // cm along wall
+  dimensions: { width: number, height: number },  // cm
+  heightFromFloor: number  // cm
 }
 ```
 
 ### Door
-
 ```javascript
 {
   id: string,
   wall: "front" | "back" | "left" | "right",
-  position: number,
-  width: number,
-  height: number,
-  swingDirection: "left" | "right"
+  position: number,  // cm along wall
+  dimensions: { width: number, height: number },  // cm
+  swingDirection: "inward" | "outward",
+  hingePosition: "left" | "right",
+  isBlocked: boolean  // auto-detected by collision service
 }
 ```
 
-### Application State
+---
 
+## User Workflow
+
+1. **Setup:** Define room dimensions via modal (default: 4m × 5m × 2.5m)
+2. **Add Furniture:**
+   - Press **O** for custom object → enter dimensions, color
+   - Press **P** for preset object → browse catalog of 70+ items
+   - Click canvas in TOP view to place
+3. **Add Windows/Doors:**
+   - Press **W** for window or **B** for door
+   - Configure wall, dimensions, and properties
+   - Click canvas in side view (windows/doors) or top view (doors) to place
+4. **Arrange & Edit:**
+   - Click objects to select, drag to move
+   - Press **R** to rotate, **D** to duplicate, **Delete** to remove
+   - Right-click for context menu (edit properties, toggle collision)
+   - Use 8-point handles to resize windows
+5. **Analyze:**
+   - Switch views (1, 2, 3, 4) to see different perspectives
+   - Check statistics panel for space usage
+   - Hover over view buttons to see directional arrows
+6. **Export:** (Coming soon) Save views as PNG images
+
+---
+
+## Known Limitations & Design Decisions
+
+### By Design
+- Object placement restricted to TOP view (prevents placement in mid-air)
+- Preset object dimensions are locked (maintains catalog integrity)
+- Windows/doors only show in relevant views (realistic visualization)
+- RIGHT view uses mirrored coordinates (you're looking at the left wall from right side)
+
+### Current Constraints
+- Canvas is fixed 800×600 pixels (simplifies rendering calculations)
+- No 3D perspective view (2D orthographic projections only)
+- Single room per project (multi-room not yet supported)
+- No project save/load (session-based only)
+
+### Planned Improvements
+See "Future Development" sections below
+
+---
+
+## Future Development (Planned Features)
+
+### Phase 8: Enhanced Statistics & Analytics
+
+**Goal:** Provide deeper insights into space utilization and layout
+
+**Planned Features:**
+- Wall space utilization percentage (windows/doors vs available wall area)
+- Weight distribution analysis (identify heavy object clusters)
+- Traffic flow visualization (pathways between doors)
+- Accessibility metrics (clearance for wheelchairs, walkers)
+- Light coverage analysis (window placement optimization)
+
+**Implementation Complexity:** Low-Medium
+**Estimated Effort:** 8-12 hours
+**Dependencies:** None (extends existing StatisticsService)
+
+---
+
+### Phase 9: Export Functionality (IN PROGRESS)
+
+**Goal:** Allow users to save and share their designs
+
+#### 9.1 PNG Export (Priority 1)
+
+**Requirements:**
+- Export current view as PNG image
+- Include room dimensions and statistics overlay (optional toggle)
+- Auto-generated filename: `{ViewName}_{Timestamp}.png` (e.g., `TopView_2025-11-30_14-32.png`)
+- Keyboard shortcut: **Ctrl/Cmd + E**
+- Export button in control panel
+
+**Technical Approach:**
 ```javascript
+class ExportService {
+  exportCurrentViewAsPNG(canvas, viewName, options = {}) {
+    // 1. Create temporary offscreen canvas
+    const exportCanvas = document.createElement('canvas');
+    const ctx = exportCanvas.getContext('2d');
+
+    // 2. Set dimensions (higher resolution for print quality)
+    const scale = options.scale || 2;
+    exportCanvas.width = canvas.width * scale;
+    exportCanvas.height = canvas.height * scale;
+
+    // 3. Copy current canvas with scaling
+    ctx.scale(scale, scale);
+    ctx.drawImage(canvas, 0, 0);
+
+    // 4. Add optional overlays
+    if (options.includeStats) {
+      this.drawStatsOverlay(ctx, statistics);
+    }
+    if (options.includeTitle) {
+      this.drawTitleOverlay(ctx, roomName, viewName);
+    }
+
+    // 5. Convert to blob and download
+    exportCanvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = this.generateFilename(viewName);
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  generateFilename(viewName) {
+    const timestamp = new Date().toISOString()
+      .replace(/:/g, '-')
+      .substring(0, 19);
+    return `${viewName}_${timestamp}.png`;
+  }
+
+  drawStatsOverlay(ctx, stats) {
+    // Draw semi-transparent box in corner
+    // Render statistics text
+  }
+}
+```
+
+**UI Components:**
+- Export button in control panel
+- Export modal with options:
+  - [ ] Include statistics overlay
+  - [ ] Include title bar
+  - [ ] Export resolution (1x, 2x, 4x)
+  - [ ] Export all views (batch export to ZIP)
+
+**Edge Cases:**
+- Handle high-resolution exports (memory limits)
+- Ensure text remains legible at different scales
+- Preserve transparency for overlays
+
+**Estimated Effort:** 6-8 hours
+**Dependencies:** None
+
+#### 9.2 PDF Export (Priority 2)
+
+**Goal:** Multi-page PDF with all views + specifications sheet
+
+**Features:**
+- Page 1: Room specifications and statistics
+- Pages 2-5: TOP, FRONT, LEFT, RIGHT views
+- Page 6: Object inventory list with dimensions
+- Professional formatting with headers/footers
+
+**Technical Approach:**
+Use **jsPDF** library:
+```javascript
+import jsPDF from 'jspdf';
+
+class PDFExportService {
+  exportRoomToPDF(room, objects, windows, doors, statistics) {
+    const pdf = new jsPDF('landscape', 'mm', 'a4');
+
+    // Page 1: Cover & Specs
+    this.addCoverPage(pdf, room, statistics);
+
+    // Pages 2-5: Views
+    ['TOP', 'FRONT', 'LEFT', 'RIGHT'].forEach((view, index) => {
+      pdf.addPage();
+      this.addViewPage(pdf, view, canvas);
+    });
+
+    // Page 6: Inventory
+    pdf.addPage();
+    this.addInventoryPage(pdf, objects, windows, doors);
+
+    pdf.save(`RoomPlan_${timestamp}.pdf`);
+  }
+}
+```
+
+**Estimated Effort:** 10-12 hours
+**Dependencies:** jsPDF library (~50KB)
+
+#### 9.3 Project Save/Load (Priority 3)
+
+**Goal:** Persist room designs for later editing
+
+**Save Format (JSON):**
+```json
 {
-  mode: "READY" | "CREATING" | "EDITING",
-  selectedObjectId: string | null,
-  isDragging: boolean,
-  currentView: "TOP" | "FRONT" | "LEFT" | "RIGHT"
+  "version": "1.0",
+  "room": {
+    "dimensions": { "width": 400, "length": 500, "height": 250 }
+  },
+  "objects": [
+    {
+      "id": "obj_001",
+      "name": "Queen Bed",
+      "isPreset": true,
+      "presetId": "queen_bed",
+      "position": { "x": 100, "y": 150, "z": 0 },
+      "rotation": 90,
+      "color": "#4A90E2",
+      "collisionEnabled": true
+    }
+  ],
+  "windows": [ /* ... */ ],
+  "doors": [ /* ... */ ],
+  "metadata": {
+    "created": "2025-11-30T14:32:00Z",
+    "modified": "2025-11-30T15:45:00Z",
+    "author": "User Name"
+  }
 }
 ```
 
----
-
-## Event Bus Pattern
-
-The application uses a centralized `EventBus` for loose coupling:
-
-```javascript
-// Any component can emit events
-this.eventBus.emit("object:created", { object });
-this.eventBus.emit("object:moved", { objectId, newPosition });
-
-// Any component can listen
-this.eventBus.on("object:created", (data) => {
-  this.render();
-  this.updateStatistics();
-});
-```
-
-Common events:
-
-- `room:updated`
-- `object:created`, `object:updated`, `object:deleted`, `object:selected`
-- `window:created`, `window:deleted`
-- `door:created`, `door:deleted`
-- `view:changed`
-- `mode:changed`
-
----
-
-## Key Design Decisions
-
-1. **Feature-Based Organization:** Each domain (Room, Objects, Windows, Doors) is self-contained, making it easy to develop, test, and refactor independently.
-    
-2. **Controller/View/Renderer Split:** Separates business logic, UI presentation, and canvas rendering for clarity and testability.
-    
-3. **Event Bus:** Loose coupling allows features to communicate without direct dependencies.
-    
-4. **Fixed Canvas Size:** Simplifies viewport calculations and rendering logic.
-    
-5. **Click-to-Place Workflow:** User creates object → modal closes → placement mode → click canvas → editing mode. Clear state transitions.
-    
-6. **Collapsible Statistics Panel:** Maximizes canvas real estate while keeping stats accessible.
-    
-7. **Simple State Model:** Minimal, centralized app state prevents bugs from inconsistent data.
-    
-
----
-
-## Development Tips
-
-### Starting Phase 1
-
-1. Create all files in structure (even if empty)
-2. Set up basic HTML with canvas and panels
-3. Create `EventBus.js` first (other code depends on it)
-4. Bootstrap `app.js` to initialize everything
-5. Get room rendering before moving to Phase 2
-
-### Testing Strategy
-
-After each phase:
-
-- Test in isolation (that feature works)
-- Test integration (doesn't break previous features)
-- Check console for errors
-- Verify canvas renders correctly
-
-### Common Gotchas
-
-- **Canvas coordinates vs room coordinates:** Keep clear which system you're using
-- **Rotation calculations:** Test all four angles (0, 90, 180, 270)
-- **Event listener cleanup:** Prevent duplicate listeners
-- **Z-ordering:** Remember creation order determines stacking
-- **Ruler calculations:** Ensure scales are accurate
-
----
-
-## Success Criteria
-
-### ✅ Completed:
-- ✅ Room can be defined with custom dimensions
-- ✅ **Custom & Precreated Objects** can be created
-- ✅ Click-to-place workflow works smoothly
-- ✅ Objects can be selected, moved, rotated, deleted
-- ✅ Right-click context menu allows property editing
-- ✅ All four views render correctly
-- ✅ Hotkeys switch views seamlessly (1-4 keys)
-- ✅ Collision detection prevents leaving room
-- ✅ Objects can be stacked (bilateral collision toggle)
-- ✅ Stacking hierarchy based on creation order
-- ✅ Statistics update in real-time
-- ✅ **Windows fully implemented with resize handles**
-- ✅ **Doors fully implemented with arc visualization**
-- ✅ **Enhanced collision detection for door swing arcs**
-- ✅ Code is organized and maintainable
-
-### ⏳ Remaining:
-- ⏳ Canvas exports to PNG successfully
-- ⏳ Keyboard shortcuts for creating objects/windows/doors
-- ⏳ Undo/redo functionality
-- ⏳ UI is polished and responsive
-- ⏳ Final testing and edge case handling
-
----
-
-**Project Type:** Web Application
-**Technologies:** HTML5, CSS3, Vanilla JavaScript (OOP)
-**Architecture:** Event-driven, feature-based
-**Document Version:** 4.0 (Post-Phase 6)
-**Last Updated:** November 2025
-
----
-
-## Recent Updates & Bug Fixes
-
-### Precreated Objects Feature (November 2025)
-- ✅ Added 70+ household objects in 8 categories
-- ✅ Scalable catalog structure in `PresetObjects.js`
-- ✅ Auto-numbered naming system (e.g., "Queen Bed 1", "Queen Bed 2")
-- ✅ Read-only dimensions for preset objects (editable name/color)
-- ✅ Categorized selection modal with visual cards
-- ✅ API-ready structure for future expansion
-
-### Door Arc Visualization Enhancement (November 2025)
-- ✅ Swing arcs now visible in perpendicular side views
-- ✅ Semi-transparent clearance zones show where doors swing
-- ✅ Fixed LEFT/RIGHT view rendering (coordinate mirroring)
-- ✅ Enhanced collision detection with 80+ sample points
-- ✅ Bidirectional checking (arc → object AND object → arc)
-
-### View Rendering Fix (November 2025)
-**Issue Fixed:** LEFT and RIGHT views were showing incorrect walls for doors and windows
-
-**Previous Behavior:**
-- LEFT view showed LEFT wall (incorrect)
-- RIGHT view showed RIGHT wall (incorrect)
-- Doors/windows appeared on wrong side in perpendicular views
-
-**Current Behavior:**
-- LEFT view shows RIGHT wall (you're looking FROM left TOWARDS right)
-- RIGHT view shows LEFT wall (mirrored coordinate system)
-- All features (doors, windows, objects) render on correct walls
-
-### Phase 6 Completion (Multiple Views)
-- ✅ All four views (TOP, FRONT, LEFT, RIGHT) fully implemented
-- ✅ Hotkey switching (1-4 keys) working correctly
-- ✅ Object selection and rendering in all views
-- ✅ View indicator updates in footer
-
-### Stacking System Refinement
-**Issue Fixed:** Stacking logic now properly respects creation order in all scenarios
-
-**Previous Behavior:**
-- Objects could only stack when the BOTTOM object had collision disabled
-- Object A (created first, collision ON) could not stack on Object B (created second, collision OFF)
-
-**Current Behavior:**
-- Stacking occurs when EITHER object has collision disabled
-- Creation order ALWAYS determines hierarchy (first created = bottom)
-- Z positions recalculate automatically when:
-  - Objects are moved or dragged
-  - Objects are rotated
-  - Collision is toggled on/off
-  - Objects are deleted
-  - Object dimensions are edited
+**Storage Options:**
+1. **LocalStorage:** Browser-based (5-10MB limit)
+2. **IndexedDB:** Browser-based (unlimited)
+3. **File Download/Upload:** .json files
+4. **Cloud Sync:** Future backend integration
 
 **Implementation:**
-- CollisionService.js:189 - Modified calculateStackingZ to check bilateral collision
-- ObjectController.js:649 - recalculateAllZPositions maintains creation order hierarchy
+```javascript
+class StorageService {
+  saveProject(room, objects, windows, doors) {
+    const projectData = {
+      version: '1.0',
+      room: this.serializeRoom(room),
+      objects: objects.map(obj => this.serializeObject(obj)),
+      windows: windows.map(w => this.serializeWindow(w)),
+      doors: doors.map(d => this.serializeDoor(d)),
+      metadata: {
+        created: new Date().toISOString(),
+        modified: new Date().toISOString()
+      }
+    };
 
-### Known Limitations
-- Object placement only allowed in TOP view (by design)
-- No undo/redo functionality yet
-- Export functionality not yet implemented
-- No keyboard shortcuts for creating objects/windows/doors
+    // Save to localStorage
+    localStorage.setItem('currentProject', JSON.stringify(projectData));
+
+    // Or download as file
+    this.downloadJSON(projectData, 'my-room-plan.json');
+  }
+
+  loadProject(jsonData) {
+    // Validate version
+    // Deserialize and reconstruct objects
+    // Restore room state
+    // Trigger full re-render
+  }
+}
+```
+
+**Auto-Save Feature:**
+- Save to localStorage every 30 seconds
+- Detect browser close and prompt to save
+- "Restore previous session" on app launch
+
+**Estimated Effort:** 12-15 hours
+
+**Total Export Phase Effort:** 28-35 hours
 
 ---
 
-## Expanding the Preset Objects Catalog
+### Phase 10: Undo/Redo Functionality
 
-The precreated objects system is designed to be **highly scalable** and **API-ready**. Here's how to expand it for future development:
+**Goal:** Allow users to revert mistakes and experiment freely
 
-### Adding New Objects to Existing Categories
+#### Implementation Strategy: Command Pattern
 
-**File:** `js/data/PresetObjects.js`
+**Why Command Pattern?**
+- Encapsulates each action as an object with `execute()` and `undo()` methods
+- Natural fit for undo/redo stacks
+- Easy to extend with new command types
+- Supports macro commands (multiple actions as one undo unit)
 
-1. Navigate to the desired category (e.g., `bedroom`, `living_room`, etc.)
-2. Add a new object to the `items` array:
+#### Core Architecture
 
+```javascript
+// Base command interface
+class Command {
+  execute() { throw new Error('Must implement execute()'); }
+  undo() { throw new Error('Must implement undo()'); }
+  redo() { this.execute(); }  // Most commands can reuse execute()
+}
+
+// Command history manager
+class CommandHistory {
+  constructor(eventBus) {
+    this.eventBus = eventBus;
+    this.undoStack = [];
+    this.redoStack = [];
+    this.maxHistory = 50;  // Limit memory usage
+  }
+
+  execute(command) {
+    command.execute();
+    this.undoStack.push(command);
+    this.redoStack = [];  // Clear redo on new action
+
+    // Limit history size
+    if (this.undoStack.length > this.maxHistory) {
+      this.undoStack.shift();
+    }
+
+    this.eventBus.emit('history:changed', {
+      canUndo: this.canUndo(),
+      canRedo: this.canRedo()
+    });
+  }
+
+  undo() {
+    if (!this.canUndo()) return;
+
+    const command = this.undoStack.pop();
+    command.undo();
+    this.redoStack.push(command);
+
+    this.eventBus.emit('history:changed', {
+      canUndo: this.canUndo(),
+      canRedo: this.canRedo()
+    });
+  }
+
+  redo() {
+    if (!this.canRedo()) return;
+
+    const command = this.redoStack.pop();
+    command.redo();
+    this.undoStack.push(command);
+
+    this.eventBus.emit('history:changed', {
+      canUndo: this.canUndo(),
+      canRedo: this.canRedo()
+    });
+  }
+
+  canUndo() { return this.undoStack.length > 0; }
+  canRedo() { return this.redoStack.length > 0; }
+
+  clear() {
+    this.undoStack = [];
+    this.redoStack = [];
+  }
+}
+```
+
+#### Example Commands
+
+**1. Add Object Command**
+```javascript
+class AddObjectCommand extends Command {
+  constructor(objectManager, object) {
+    super();
+    this.objectManager = objectManager;
+    this.object = object;
+  }
+
+  execute() {
+    this.objectManager.addObject(this.object);
+    // Emit event for rendering
+  }
+
+  undo() {
+    this.objectManager.removeObject(this.object.id);
+    // Emit event for rendering
+  }
+}
+```
+
+**2. Move Object Command**
+```javascript
+class MoveObjectCommand extends Command {
+  constructor(object, oldPosition, newPosition) {
+    super();
+    this.object = object;
+    this.oldPosition = { ...oldPosition };
+    this.newPosition = { ...newPosition };
+  }
+
+  execute() {
+    this.object.move(this.newPosition.x, this.newPosition.y, this.newPosition.z);
+  }
+
+  undo() {
+    this.object.move(this.oldPosition.x, this.oldPosition.y, this.oldPosition.z);
+  }
+}
+```
+
+**3. Rotate Object Command**
+```javascript
+class RotateObjectCommand extends Command {
+  constructor(object, oldRotation, newRotation) {
+    super();
+    this.object = object;
+    this.oldRotation = oldRotation;
+    this.newRotation = newRotation;
+  }
+
+  execute() {
+    this.object.rotation = this.newRotation;
+  }
+
+  undo() {
+    this.object.rotation = this.oldRotation;
+  }
+}
+```
+
+**4. Edit Properties Command (Complex)**
+```javascript
+class EditObjectCommand extends Command {
+  constructor(object, oldProps, newProps) {
+    super();
+    this.object = object;
+    this.oldProps = { ...oldProps };
+    this.newProps = { ...newProps };
+  }
+
+  execute() {
+    Object.assign(this.object, this.newProps);
+    // Recalculate stacking if dimensions changed
+  }
+
+  undo() {
+    Object.assign(this.object, this.oldProps);
+    // Recalculate stacking
+  }
+}
+```
+
+**5. Macro Command (Multi-Step Action)**
+```javascript
+class MacroCommand extends Command {
+  constructor(commands) {
+    super();
+    this.commands = commands;
+  }
+
+  execute() {
+    this.commands.forEach(cmd => cmd.execute());
+  }
+
+  undo() {
+    // Undo in reverse order
+    for (let i = this.commands.length - 1; i >= 0; i--) {
+      this.commands[i].undo();
+    }
+  }
+}
+
+// Example: Duplicate object (delete original + add copy = 1 undo)
+const duplicate = new MacroCommand([
+  new AddObjectCommand(manager, copy),
+  new MoveObjectCommand(copy, originalPos, offsetPos)
+]);
+```
+
+#### Integration Points
+
+**1. Modify Controllers:**
+```javascript
+// Before (ObjectController):
+deleteSelectedObjects() {
+  this.objectManager.removeObject(id);
+}
+
+// After:
+deleteSelectedObjects() {
+  const cmd = new DeleteObjectCommand(this.objectManager, object);
+  this.commandHistory.execute(cmd);
+}
+```
+
+**2. Drag-and-Drop Challenge:**
+Dragging emits many position updates. Options:
+- **A) Record only on mouse-up:**
+  ```javascript
+  handleMouseDown() {
+    this.dragStartPos = { ...object.position };
+  }
+
+  handleMouseUp() {
+    const dragEndPos = { ...object.position };
+    if (positionChanged(this.dragStartPos, dragEndPos)) {
+      const cmd = new MoveObjectCommand(object, this.dragStartPos, dragEndPos);
+      this.commandHistory.execute(cmd);
+    }
+  }
+  ```
+
+- **B) Batch intermediate moves:**
+  Record final position only, discard intermediate states
+
+**3. UI Components:**
+- Undo/Redo buttons in toolbar (enabled/disabled based on stack state)
+- Keyboard shortcuts: **Ctrl+Z** (undo), **Ctrl+Shift+Z** or **Ctrl+Y** (redo)
+- Optional: Show undo history dropdown (last 10 actions)
+
+#### Trackable Actions
+
+**Objects:**
+- ✅ Add/Delete
+- ✅ Move (drag or property edit)
+- ✅ Rotate
+- ✅ Resize
+- ✅ Toggle collision
+- ✅ Toggle visibility
+- ✅ Edit properties (name, color)
+- ✅ Duplicate
+
+**Windows:**
+- ✅ Add/Delete
+- ✅ Move (drag along wall)
+- ✅ Resize (via handles)
+- ✅ Edit properties (wall, dimensions)
+- ✅ Duplicate
+
+**Doors:**
+- ✅ Add/Delete
+- ✅ Move (drag along wall)
+- ✅ Edit properties (swing direction, hinge, wall)
+- ✅ Duplicate
+
+**Room:**
+- ✅ Change dimensions (warns about objects outside new bounds)
+
+#### Edge Cases & Considerations
+
+**1. Collision Failures:**
+If undo/redo places object in invalid position (e.g., room was resized):
+- Option A: Allow temporary invalid state with warning
+- Option B: Adjust position to nearest valid location
+- Option C: Skip that undo step with notification
+
+**2. Memory Management:**
+- Limit stack to 50 actions (configurable)
+- Deep clone object state (avoid reference issues)
+- Clear history on room reset
+
+**3. Multi-Select:**
+```javascript
+class DeleteMultipleCommand extends Command {
+  constructor(objectManager, objects) {
+    super();
+    this.objectManager = objectManager;
+    this.objects = objects.map(obj => ({ ...obj }));  // Clone
+  }
+
+  execute() {
+    this.objects.forEach(obj => this.objectManager.removeObject(obj.id));
+  }
+
+  undo() {
+    this.objects.forEach(obj => this.objectManager.addObject(obj));
+  }
+}
+```
+
+**4. Stacking Recalculation:**
+Some actions (move, resize, toggle collision) trigger Z-position recalculation for all objects. Command must store:
+- Direct changes (moved object position)
+- Indirect changes (other objects' Z positions)
+
+```javascript
+class MoveWithStackingCommand extends Command {
+  constructor(object, oldPosition, newPosition, affectedObjects) {
+    super();
+    this.object = object;
+    this.oldPosition = oldPosition;
+    this.newPosition = newPosition;
+    this.affectedZPositions = affectedObjects.map(obj => ({
+      id: obj.id,
+      z: obj.position.z
+    }));
+  }
+
+  execute() {
+    this.object.move(this.newPosition.x, this.newPosition.y, this.newPosition.z);
+    recalculateAllZPositions();
+  }
+
+  undo() {
+    this.object.move(this.oldPosition.x, this.oldPosition.y, this.oldPosition.z);
+    // Restore Z positions
+    this.affectedZPositions.forEach(({ id, z }) => {
+      const obj = objectManager.getObject(id);
+      if (obj) obj.position.z = z;
+    });
+  }
+}
+```
+
+#### Development Phases
+
+**Phase 10.1: Core System (8-10 hours)**
+- Implement Command base class and CommandHistory
+- Add basic commands (Add, Delete, Move, Rotate for objects)
+- Integrate with ObjectController
+- Wire up Ctrl+Z / Ctrl+Y keyboard shortcuts
+- Add toolbar buttons with enabled/disabled states
+
+**Phase 10.2: Extended Commands (6-8 hours)**
+- Implement property editing commands (resize, color, name)
+- Add window and door commands
+- Handle multi-select operations
+- Test edge cases (room resize, collision failures)
+
+**Phase 10.3: UI Polish (4-6 hours)**
+- Add visual feedback (toast notifications: "Undid: Add Queen Bed")
+- Optional: History dropdown showing last actions
+- Keyboard shortcut hints in tooltips
+- Test with rapid undo/redo sequences
+
+**Total Effort:** 18-24 hours
+
+#### Success Criteria
+- [ ] All object, window, door actions are undoable
+- [ ] Undo/redo stacks limited to 50 actions
+- [ ] Keyboard shortcuts work reliably
+- [ ] No memory leaks from retained object references
+- [ ] State remains consistent after undo/redo sequences
+- [ ] UI buttons reflect available actions
+- [ ] Drag-and-drop creates single undo action
+
+---
+
+## Development Roadmap Summary
+
+### Completed (Phases 1-7)
+- ✅ Room system with multi-view rendering
+- ✅ Custom and preset objects (70+ catalog)
+- ✅ Windows with resize handles
+- ✅ Doors with swing arc visualization
+- ✅ Collision detection and stacking
+- ✅ Statistics and analytics
+- ✅ Keyboard shortcuts for all actions
+- ✅ Direction indicators for view navigation
+
+### In Progress
+- 🔄 Phase 9: Export functionality (PNG, PDF, save/load)
+
+### Planned
+- 📋 Phase 10: Undo/redo system
+- 📋 Phase 11: Advanced features (templates, multi-room, 3D view)
+
+### Long-Term Vision
+- Cloud sync and collaboration
+- Community object marketplace
+- AR/VR integration for immersive visualization
+- AI-powered layout suggestions
+
+---
+
+## Quick Reference
+
+### Keyboard Shortcuts
+| Key | Action |
+|-----|--------|
+| O | Add custom object |
+| P | Add preset object |
+| W | Add window |
+| B | Add door |
+| R | Rotate selected |
+| D | Duplicate selected |
+| H | Hide/show selected |
+| C | Toggle collision |
+| E | Deselect all |
+| Delete | Remove selected |
+| 1-4 | Switch views |
+| Ctrl+A | Select all |
+| Ctrl+Z | Undo (planned) |
+| Ctrl+Y | Redo (planned) |
+| Ctrl+E | Export (planned) |
+| ? | Show help |
+
+### UI Layout
+```
+┌─────────────┬────────────────────┐
+│ CONTROLS    │                    │
+│ - Room      │                    │
+│ - Objects   │    CANVAS AREA     │
+│ - Windows   │    (800×600)       │
+│ - Doors     │                    │
+│             │                    │
+│ STATISTICS  │                    │
+│ - Floor     │                    │
+│ - Objects   │                    │
+│ - Windows   │                    │
+│ - Doors     │                    │
+└─────────────┴────────────────────┤
+│ [≡] [1][2][3][4]    Mode: Ready  │
+└──────────────────────────────────┘
+```
+
+### Event Flow
+```
+User Action → Controller → Command (future) → Manager →
+EventBus → Renderers → Canvas Update
+```
+
+---
+
+## Contributing & Extension
+
+### Adding Preset Objects
+Edit `js/data/PresetObjects.js`:
 ```javascript
 bedroom: {
-    categoryName: "Bedroom",
-    items: [
-        // Existing objects...
-        {
-            id: "super_king_bed",           // Unique ID (lowercase_snake_case)
-            name: "Super King Bed",         // Display name
-            width: 200,                     // Width in cm
-            length: 200,                    // Length in cm
-            height: 50,                     // Height in cm
-            color: "#4A90E2"                // Hex color code
-        }
-    ]
-}
-```
-
-**Rules:**
-- `id` must be unique across ALL categories
-- Dimensions are in **centimeters**
-- Use consistent naming conventions
-- Color should match category theme (optional)
-
-### Adding New Categories
-
-Add a new category object to `PRESET_OBJECTS`:
-
-```javascript
-const PRESET_OBJECTS = {
-    // Existing categories...
-
-    garage: {
-        categoryName: "Garage & Workshop",
-        items: [
-            {
-                id: "workbench",
-                name: "Workbench",
-                width: 180,
-                length: 60,
-                height: 90,
-                color: "#8B4513"
-            },
-            {
-                id: "tool_cabinet",
-                name: "Tool Cabinet",
-                width: 80,
-                length: 50,
-                height: 180,
-                color: "#696969"
-            }
-        ]
+  categoryName: "Bedroom",
+  items: [
+    {
+      id: "super_king_bed",
+      name: "Super King Bed",
+      width: 200,
+      length: 200,
+      height: 50,
+      color: "#4A90E2"
     }
-};
+  ]
+}
 ```
 
-**The UI will automatically:**
-- Create a new category section in the modal
-- Display all items with dimensions
-- Handle selection and placement
-
-### Replacing with API Data (Future Enhancement)
-
-To load objects from an external API or database:
-
-**1. Create an API service:**
-
+### Creating New Commands (Undo/Redo)
 ```javascript
-// js/services/PresetObjectService.js
-class PresetObjectService {
-    async fetchPresetObjects() {
-        try {
-            const response = await fetch('https://api.example.com/preset-objects');
-            const data = await response.json();
-            return data; // Should match PRESET_OBJECTS structure
-        } catch (error) {
-            console.error('Failed to load preset objects:', error);
-            return PRESET_OBJECTS; // Fallback to local data
-        }
-    }
+class MyCustomCommand extends Command {
+  constructor(params) {
+    super();
+    this.params = params;
+  }
+
+  execute() {
+    // Perform action
+    // Emit events for rendering
+  }
+
+  undo() {
+    // Reverse action
+    // Emit events for rendering
+  }
 }
 ```
 
-**2. Update PresetObjects.js to support dynamic loading:**
-
+### Adding Statistics
+Extend `StatisticsService.js`:
 ```javascript
-// At the top of PresetObjects.js
-let PRESET_OBJECTS = {
-    // ... local fallback data
-};
-
-async function loadPresetObjects() {
-    const service = new PresetObjectService();
-    PRESET_OBJECTS = await service.fetchPresetObjects();
-}
-
-// Call during app initialization
-// await loadPresetObjects();
-```
-
-**3. Expected API Response Format:**
-
-```json
-{
-    "bedroom": {
-        "categoryName": "Bedroom",
-        "items": [
-            {
-                "id": "queen_bed",
-                "name": "Queen Bed",
-                "width": 160,
-                "length": 200,
-                "height": 50,
-                "color": "#4A90E2"
-            }
-        ]
-    }
-}
-```
-
-### Adding Object Metadata (Future)
-
-You can extend the object definition with additional metadata:
-
-```javascript
-{
-    id: "queen_bed",
-    name: "Queen Bed",
-    width: 160,
-    length: 200,
-    height: 50,
-    color: "#4A90E2",
-
-    // Future enhancements:
-    thumbnail: "/images/queen_bed.png",
-    description: "Standard queen-size bed",
-    tags: ["furniture", "bedroom", "sleeping"],
-    brand: "IKEA",
-    modelNumber: "MALM-160",
-    price: 299.99,
-    url: "https://example.com/queen-bed"
-}
-```
-
-### Best Practices
-
-1. **Consistent Naming:**
-   - IDs: `lowercase_snake_case`
-   - Names: `Title Case`
-   - Colors: Hex codes (`#RRGGBB`)
-
-2. **Realistic Dimensions:**
-   - Research actual furniture dimensions
-   - Round to nearest 5cm for consistency
-   - Height should include legs/clearance
-
-3. **Color Coordination:**
-   - Use category-consistent colors
-   - Bedroom: Blues (#4A90E2)
-   - Furniture: Browns (#8B4513, #A0522D)
-   - Appliances: Grays/Silver (#C0C0C0, #696969)
-
-4. **Category Organization:**
-   - Group by room type or function
-   - Keep categories focused (5-10 items ideal)
-   - Too many items? Split into subcategories
-
-5. **Testing:**
-   - Test each new object for proper placement
-   - Verify dimensions look realistic in room
-   - Check collision detection works correctly
-
-### Community/User-Contributed Objects (Future)
-
-To support user-contributed objects:
-
-1. Add import/export functionality
-2. Create JSON schema for validation
-3. Build object preview/approval system
-4. Implement object sharing via URLs or codes
-
-**Example Export Format:**
-
-```json
-{
-    "name": "My Custom Sofa",
-    "width": 220,
-    "length": 95,
-    "height": 85,
-    "color": "#A0522D",
-    "category": "living_room",
-    "author": "username",
-    "dateCreated": "2025-11-30"
+calculateCustomMetric(objects, room) {
+  // Your calculation logic
+  return result;
 }
 ```
 
 ---
 
-### Future Development Roadmap
-
-**Short Term:**
-- ⏳ Add keyboard shortcuts for object creation
-- ⏳ Implement undo/redo functionality
-- ⏳ Complete PNG export functionality
-- ⏳ Prevent window/door overlaps
-
-**Medium Term:**
-- 🔮 Load preset objects from external API
-- 🔮 Object search and filtering
-- 🔮 Save/load room configurations
-- 🔮 Object thumbnails/previews
-
-**Long Term:**
-- 🔮 User-customizable object library
-- 🔮 Community-shared object marketplace
-- 🔮 3D view rendering
-- 🔮 Room templates library
-- 🔮 Multi-room floor plans
-
-
+**Document Version:** 5.0
+**Authors:** Development Team
+**License:** MIT (or specify your license)

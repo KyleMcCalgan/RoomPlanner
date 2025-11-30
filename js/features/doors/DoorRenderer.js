@@ -99,7 +99,7 @@ class DoorRenderer {
                 // Door is on this wall - render the full door
                 this.renderDoorSideView(ctx, door, view, isSelected, isPending);
             } else {
-                // Door is on perpendicular wall - render only the arc/clearance zone
+                // Door is on perpendicular wall - render the arc/clearance zone
                 this.renderDoorArcPerpendicularView(ctx, door, view, isSelected, isPending);
             }
         }
@@ -220,10 +220,8 @@ class DoorRenderer {
         // Determine if door is blocked
         const isBlocked = door.isBlocked && !isPending;
 
-        // Render swing arc visualization first (only for inward-swinging doors)
-        if (door.swingDirection === 'inward') {
-            this.renderSwingArcSideView(ctx, door, view, x, y, width, height, isBlocked, isPending);
-        }
+        // Swing arc visualization in side views removed - not needed when viewing door head-on
+        // The arc is still visible in TOP view and collision detection still works
 
         // Save context state
         ctx.save();

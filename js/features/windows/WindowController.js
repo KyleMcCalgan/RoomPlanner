@@ -2,7 +2,7 @@
  * WindowController - Handles window interactions and placement logic
  */
 class WindowController {
-    constructor(windowManager, viewport, eventBus, windowView, collisionService, room, viewManager, windowRenderer = null) {
+    constructor(windowManager, viewport, eventBus, windowView, collisionService, room, viewManager, windowRenderer = null, doorManager = null) {
         this.windowManager = windowManager;
         this.viewport = viewport;
         this.eventBus = eventBus;
@@ -11,6 +11,7 @@ class WindowController {
         this.room = room;
         this.viewManager = viewManager;
         this.windowRenderer = windowRenderer; // Will be set later
+        this.doorManager = doorManager; // Door manager for collision checking
 
         this.state = {
             mode: 'READY', // READY, CREATING_WINDOW
@@ -148,7 +149,7 @@ class WindowController {
 
         // Check for collisions with other windows and doors
         const allWindows = this.windowManager.getAllWindows();
-        const allDoors = this.room.doors || [];
+        const allDoors = this.doorManager ? this.doorManager.getAllDoors() : [];
 
         const collisionResult = this.collisionService.canPlaceWindow(
             this.state.pendingWindow,
@@ -198,7 +199,8 @@ class WindowController {
                 heightFromFloor = roomPos.y; // Y represents Z (height)
                 break;
             case 'RIGHT': // Y-Z plane (right wall at X=width)
-                wallPosition = roomPos.x; // X represents Y (along wall)
+                // Right view is mirrored - flip the horizontal coordinate
+                wallPosition = this.room.dimensions.length - roomPos.x;
                 heightFromFloor = roomPos.y; // Y represents Z (height)
                 break;
         }
@@ -273,7 +275,9 @@ class WindowController {
             // Start resizing
             this.state.isResizing = true;
             this.state.resizeHandle = handle;
-            this.state.dragStartPos = roomPos;
+            // Store the converted position (flipped for RIGHT view) so delta calculations work correctly
+            const { wallPosition, heightFromFloor } = this.getWindowPositionFromClick(roomPos, currentView);
+            this.state.dragStartPos = { x: wallPosition, y: heightFromFloor };
             this.state.resizeStartDimensions = {
                 position: selectedWindow.position,
                 width: selectedWindow.dimensions.width,
@@ -288,7 +292,8 @@ class WindowController {
 
             if (selectedWindow.containsPoint(wallPosition, heightFromFloor)) {
                 this.state.isDragging = true;
-                this.state.dragStartPos = roomPos;
+                // Store the converted position (flipped for RIGHT view) so comparisons work correctly
+                this.state.dragStartPos = { x: wallPosition, y: heightFromFloor };
                 this.state.dragWindowStartPos = {
                     position: selectedWindow.position,
                     heightFromFloor: selectedWindow.heightFromFloor
@@ -350,11 +355,25 @@ class WindowController {
      */
     handleResize(roomPos, window, view) {
         const { wallPosition, heightFromFloor } = this.getWindowPositionFromClick(roomPos, view);
-        const handle = this.state.resizeHandle;
+        let handle = this.state.resizeHandle;
         const start = this.state.resizeStartDimensions;
         const startPos = this.state.dragStartPos;
 
-        // Calculate deltas
+        // In RIGHT view, the visual left/right is flipped relative to room coordinates
+        // So we need to swap horizontal handle directions
+        if (view === 'RIGHT') {
+            const handleMap = {
+                'left': 'right',
+                'right': 'left',
+                'top-left': 'top-right',
+                'top-right': 'top-left',
+                'bottom-left': 'bottom-right',
+                'bottom-right': 'bottom-left'
+            };
+            handle = handleMap[handle] || handle;
+        }
+
+        // Calculate deltas (both values are now in the same coordinate space)
         const deltaPos = wallPosition - startPos.x;
         const deltaHeight = heightFromFloor - startPos.y;
 
@@ -433,7 +452,7 @@ class WindowController {
 
         // Validate final position/dimensions
         const allWindows = this.windowManager.getAllWindows();
-        const allDoors = this.room.doors || [];
+        const allDoors = this.doorManager ? this.doorManager.getAllDoors() : [];
 
         const collisionResult = this.collisionService.canPlaceWindow(
             selectedWindow,
@@ -599,7 +618,7 @@ class WindowController {
 
         // Validate new position
         const allWindows = this.windowManager.getAllWindows();
-        const allDoors = this.room.doors || [];
+        const allDoors = this.doorManager ? this.doorManager.getAllDoors() : [];
 
         const collisionResult = this.collisionService.canPlaceWindow(
             window,

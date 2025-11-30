@@ -10,13 +10,18 @@ class RoomRenderer {
     /**
      * Render the room
      * @param {string} view - Current view (TOP, FRONT, LEFT, RIGHT)
+     * @param {string} hoveredView - View button being hovered (optional)
      */
-    render(view = 'TOP') {
+    render(view = 'TOP', hoveredView = null) {
         const ctx = this.viewport.getContext();
 
         switch(view) {
             case 'TOP':
                 this.renderTopView(ctx);
+                // Draw direction indicator if hovering over a view button in TOP view
+                if (hoveredView && hoveredView !== 'TOP') {
+                    this.drawViewDirectionIndicator(ctx, hoveredView);
+                }
                 break;
             case 'FRONT':
                 this.renderFrontView(ctx);
@@ -245,6 +250,117 @@ class RoomRenderer {
 
         // Draw room border
         drawStrokeRect(ctx, topLeft.x, topLeft.y, width, height, '#5B9BD5', 2);
+    }
+
+    /**
+     * Draw directional arrow indicator for a view
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     * @param {string} view - View to draw indicator for (FRONT, LEFT, RIGHT)
+     */
+    drawViewDirectionIndicator(ctx, view) {
+        if (!view || view === 'TOP') return;
+
+        const topLeft = this.viewport.toCanvasCoords(0, 0);
+        const bottomRight = this.viewport.toCanvasCoords(
+            this.room.dimensions.width,
+            this.room.dimensions.length
+        );
+
+        const width = bottomRight.x - topLeft.x;
+        const height = bottomRight.y - topLeft.y;
+
+        ctx.save();
+
+        // Arrow styling
+        ctx.strokeStyle = 'rgba(91, 155, 213, 0.8)';
+        ctx.fillStyle = 'rgba(91, 155, 213, 0.6)';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        const arrowLength = 50;
+        const arrowHeadSize = 15;
+
+        let startX, startY, endX, endY;
+
+        switch (view) {
+            case 'FRONT':
+                // Arrow pointing UP (towards front wall) from bottom padding area
+                startX = topLeft.x + width / 2;
+                startY = bottomRight.y + 50;
+                endX = startX;
+                endY = bottomRight.y + 10;
+                break;
+
+            case 'LEFT':
+                // Arrow pointing RIGHT (towards left wall) from left padding area
+                startX = topLeft.x - 90;
+                startY = topLeft.y + height / 2;
+                endX = topLeft.x - 50;
+                endY = startY;
+                break;
+
+            case 'RIGHT':
+                // Arrow pointing LEFT (towards right wall) from right padding area
+                startX = bottomRight.x + 50;
+                startY = topLeft.y + height / 2;
+                endX = bottomRight.x + 10;
+                endY = startY;
+                break;
+        }
+
+        // Draw arrow shaft
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+
+        // Draw arrow head
+        const angle = Math.atan2(endY - startY, endX - startX);
+
+        ctx.beginPath();
+        ctx.moveTo(endX, endY);
+        ctx.lineTo(
+            endX - arrowHeadSize * Math.cos(angle - Math.PI / 6),
+            endY - arrowHeadSize * Math.sin(angle - Math.PI / 6)
+        );
+        ctx.lineTo(
+            endX - arrowHeadSize * Math.cos(angle + Math.PI / 6),
+            endY - arrowHeadSize * Math.sin(angle + Math.PI / 6)
+        );
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Draw label
+        let labelX = startX;
+        let labelY = startY;
+        let labelText = '';
+
+        switch (view) {
+            case 'FRONT':
+                labelText = 'FRONT VIEW';
+                labelY = bottomRight.y + 65; // Position below the arrow in padding area
+                break;
+            case 'LEFT':
+                labelText = 'LEFT VIEW';
+                labelX = topLeft.x - 70; // Position in left padding area
+                labelY = topLeft.y + height / 2 + 20;
+                break;
+            case 'RIGHT':
+                labelText = 'RIGHT VIEW';
+                labelX = bottomRight.x + 50; // Position in right padding area
+                labelY = topLeft.y + height / 2 + 20;
+                break;
+        }
+
+        ctx.fillStyle = 'rgba(91, 155, 213, 0.9)';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(labelText, labelX, labelY);
+
+        ctx.restore();
     }
 
     /**

@@ -15,9 +15,10 @@ class ViewRenderer {
      */
     render() {
         const currentView = this.viewManager.getCurrentView();
+        const hoveredView = this.viewManager.getHoveredView();
 
-        // Render room first
-        this.roomRenderer.render(currentView);
+        // Render room first (pass hoveredView for direction indicators)
+        this.roomRenderer.render(currentView, hoveredView);
 
         // Render windows (after room, before objects so objects can overlap windows)
         if (this.windowRenderer) {
